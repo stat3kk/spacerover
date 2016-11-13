@@ -1,9 +1,9 @@
 {
     "Bot Info" :
     {
-        "BotName"                   : "UAlbertaBot",
-        "Authors"                   : "David Churchill",
-        "PrintInfoOnStart"          : false
+        "BotName"                   : "spacerover",
+        "Authors"                   : "Brandon Williams, Jimmy Ho, Jacky Chung",
+        "PrintInfoOnStart"          : true
     },
         
     "BWAPI" : 
