@@ -107,6 +107,7 @@ void CombatCommander::updateAttackSquads()
     mainAttackSquad.setSquadOrder(mainAttackOrder);
 }
 
+/*This is not used yet*/
 void CombatCommander::updateDropSquads()
 {
     if (Config::Strategy::StrategyName != "Protoss_Drop")
@@ -125,10 +126,12 @@ void CombatCommander::updateDropSquads()
     {
         if (unit->isFlying() && unit->getType().spaceProvided() > 0)
         {
+			//there exists a shuttle
             dropSquadHasTransport = true;
         }
         else
         {
+			// we picked something up
             transportSpotsRemaining -= unit->getType().spaceRequired();
         }
     }
@@ -166,6 +169,69 @@ void CombatCommander::updateDropSquads()
         SquadOrder dropOrder(SquadOrderTypes::Drop, getMainAttackLocation(), 800, "Attack Enemy Base");
         dropSquad.setSquadOrder(dropOrder);
     }
+}
+
+void CombatCommander::updateReaverDropSquads()
+{
+	if (Config::Strategy::StrategyName != "Protoss_ReaverDrop")
+	{
+		return;
+	}
+
+	Squad & dropSquad = _squadData.getSquad("Drop");
+
+	// figure out how many units the drop squad needs
+	bool dropSquadHasTransport = false;
+	int transportSpotsRemaining = 8;
+	auto & dropUnits = dropSquad.getUnits();
+
+	for (auto & unit : dropUnits)
+	{
+		if (unit->isFlying() && unit->getType().spaceProvided() > 0)
+		{
+			//there exists a shuttle
+			dropSquadHasTransport = true;
+		}
+		else
+		{
+			// we picked something up
+			transportSpotsRemaining -= unit->getType().spaceRequired();
+		}
+	}
+
+	// if there are still units to be added to the drop squad, do it
+	if (transportSpotsRemaining > 0 || !dropSquadHasTransport)
+	{
+		// take our first amount of combat units that fill up a transport and add them to the drop squad
+		for (auto & unit : _combatUnits)
+		{
+			// if this is a transport unit and we don't have one in the squad yet, add it
+			if (!dropSquadHasTransport && (unit->getType().spaceProvided() > 0 && unit->isFlying()))
+			{
+				_squadData.assignUnitToSquad(unit, dropSquad);
+				dropSquadHasTransport = true;
+				continue;
+			}
+
+			if (unit->getType().spaceRequired() > transportSpotsRemaining)
+			{
+				continue;
+			}
+
+			// get every unit of a lower priority and put it into the attack squad
+			if (!unit->getType().isWorker() && _squadData.canAssignUnitToSquad(unit, dropSquad))
+			{
+				_squadData.assignUnitToSquad(unit, dropSquad);
+				transportSpotsRemaining -= unit->getType().spaceRequired();
+			}
+		}
+	}
+	// otherwise the drop squad is full, so execute the order
+	else
+	{
+		SquadOrder dropOrder(SquadOrderTypes::Drop, getMainAttackLocation(), 800, "Attack Enemy Base");
+		dropSquad.setSquadOrder(dropOrder);
+	}
 }
 
 void CombatCommander::updateScoutDefenseSquad() 

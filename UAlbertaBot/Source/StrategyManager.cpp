@@ -125,6 +125,7 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
     int numScout            = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Corsair);
     int numReaver           = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Reaver);
     int numDarkTeplar       = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Dark_Templar);
+	int numShuttle	        = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Shuttle);
 
     if (Config::Strategy::StrategyName == "Protoss_ZealotRush")
     {
@@ -152,6 +153,35 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
             goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 8));
         }
     }
+	// added strategy here
+	else if (Config::Strategy::StrategyName == "Protoss_ReaverDrop")
+	{
+		if (numZealots == 0)
+		{
+			// changed here, instead of numZealots+4, just 4
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, 4));
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Shuttle, 1));
+		}
+		else if (numReaver == 0)
+		{
+			// change it to just 1? idk why it is numUnits + 1 like above examples
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Reaver, numReaver + 1));
+		}
+		// a shuttle every 2 reavers for testing
+		// conditional on the lhs of and is to take care of division by zero
+		else if ((numShuttle > 0) && (numReaver/numShuttle) > 2)
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Shuttle, numShuttle + 1));
+		}
+		else if (numZealots > 16)
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Reaver, numReaver + 1));
+		}
+		else
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 8));
+		}
+	}
     else if (Config::Strategy::StrategyName == "Protoss_DTRush")
     {
         goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dark_Templar, numDarkTeplar + 2));
