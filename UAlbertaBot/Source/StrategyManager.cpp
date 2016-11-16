@@ -157,16 +157,11 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 	else if (Config::Strategy::StrategyName == "Protoss_ReaverDrop")
 	{
 		/*This was done just to test shuttle loading/unloading. Please change this*/
-
-		// oh yea, adding zealots to the config file breaks my test because if we start the
-		// StrategyUpdateFrame (?) with a zealot already spawned, I won't spawn any shuttles
-		if (numZealots == 0)
+		if (numShuttle == 0)
 		{
-			// changed here, instead of numZealots+4, just 4
-			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, 4));
-			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Shuttle, 1));
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Shuttle, numShuttle + 1));
 		}
-		// I want to at least spawn a shuttle first.
+		// make sure shuttles are out first
 		else if ((numShuttle > 0) && (numReaver == 0))
 		{
 			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Reaver, numReaver + 1));
@@ -177,7 +172,8 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 		{
 			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Shuttle, numShuttle + 1));
 		}
-		// I didn't need anymore zealots to test the shuttle so ...
+		// I didn't need anymore zealots to test the shuttle so ... its ok we dont need zealots anyway
+		/*
 		else if (numZealots > 3)
 		{
 			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Reaver, numReaver + 1));
@@ -186,6 +182,15 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 		else
 		{
 		//	goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 8));
+		}
+		*/
+		else 
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Reaver, numReaver + 4));
+		}
+		if (numNexusAll >= 2)
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 1));
 		}
 	}
     else if (Config::Strategy::StrategyName == "Protoss_DTRush")

@@ -24,7 +24,7 @@ void RangedManager::assignTargetsOld(const BWAPI::Unitset & targets)
     for (auto & rangedUnit : rangedUnits)
 	{
 		// train sub units such as scarabs or interceptors
-		//trainSubUnits(rangedUnit);
+		trainSubUnits(rangedUnit);
 
 		// if the order is to attack or defend
 		if (order.getType() == SquadOrderTypes::Attack || order.getType() == SquadOrderTypes::Defend) 
