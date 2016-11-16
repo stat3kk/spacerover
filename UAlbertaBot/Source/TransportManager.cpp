@@ -14,10 +14,12 @@ TransportManager::TransportManager() :
 
 void TransportManager::executeMicro(const BWAPI::Unitset & targets) 
 {
+	// I assume this is the units in the drop squad
 	const BWAPI::Unitset & transportUnits = getUnits();
 
 	if (transportUnits.empty())
 	{
+		
 		return;
 	}	
 }
@@ -117,11 +119,29 @@ void TransportManager::drawTransportInformation(int x = 0, int y = 0)
 
 void TransportManager::update()
 {
-    if (!_transportShip && getUnits().size() > 0)
+    
+	const BWAPI::Unitset & dropUnits = getUnits();
+	int transportSpotsRemaining = 8;
+	int unitSpace = 0;
+	
+	// Why bother with 'getUnits().size()?????'
+	// It returned 1 or 0 when I checked ...
+	if (!_transportShip && getUnits().size() > 0)
     {
         _transportShip = *getUnits().begin();
     }
-
+	
+	// check if there is still space on the transport ship remaining
+	// I want to play with this later on, as of now it can only move 
+	// if there is a full (?) squad
+	if (_transportShip)
+	{
+		if (_transportShip->getSpaceRemaining() > 2)
+		{
+			return; 
+		}
+	}
+	
 	// calculate enemy region vertices if we haven't yet
 	if (_mapEdgeVertices.empty())
 	{
@@ -152,10 +172,12 @@ void TransportManager::moveTransport()
 	
 	if (_to.isValid() && _from.isValid())
 	{
+		// I don't know what this does ... but it doesn't run
 		followPerimeter(_to, _from);
 	}
 	else
 	{
+		// This runs when we are full of troops
 		followPerimeter();
 	}
 }

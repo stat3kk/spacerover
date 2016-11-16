@@ -37,6 +37,13 @@ void CombatCommander::initializeSquads()
         _squadData.addSquad("Drop", Squad("Drop", zealotDrop, DropPriority));
     }
 
+	//add drop squad if we are using ReverDrop strat
+	if (Config::Strategy::StrategyName == "Protoss_ReaverDrop")
+	{
+		SquadOrder zealotDrop(SquadOrderTypes::Drop, ourBasePosition, 900, "Wait for transport");
+		_squadData.addSquad("ReaverDrop", Squad("ReaverDrop", zealotDrop, DropPriority));
+	}
+
     _initialized = true;
 }
 
@@ -63,6 +70,10 @@ void CombatCommander::update(const BWAPI::Unitset & combatUnits)
 	if (isSquadUpdateFrame())
 	{
         updateIdleSquad();
+
+		// so the ReaverDropSquad makes every unit wait even if the squad is full?
+		// make it so the updateReaverDropSquad returns immediatly on the frames at which the squad is full
+		updateReaverDropSquads();
         updateDropSquads();
         updateScoutDefenseSquad();
 		updateDefenseSquads();
@@ -171,6 +182,8 @@ void CombatCommander::updateDropSquads()
     }
 }
 
+
+// problem here is that the squad doesn't include the shuttle itself.
 void CombatCommander::updateReaverDropSquads()
 {
 	if (Config::Strategy::StrategyName != "Protoss_ReaverDrop")
@@ -178,12 +191,12 @@ void CombatCommander::updateReaverDropSquads()
 		return;
 	}
 
-	Squad & dropSquad = _squadData.getSquad("Drop");
+	Squad & dropSquad = _squadData.getSquad("ReaverDrop");
 
 	// figure out how many units the drop squad needs
 	bool dropSquadHasTransport = false;
 	int transportSpotsRemaining = 8;
-	auto & dropUnits = dropSquad.getUnits();
+	auto & dropUnits = dropSquad.getUnits(); 
 
 	for (auto & unit : dropUnits)
 	{
@@ -206,13 +219,16 @@ void CombatCommander::updateReaverDropSquads()
 		for (auto & unit : _combatUnits)
 		{
 			// if this is a transport unit and we don't have one in the squad yet, add it
+			// the if statement is looking for a shuttle
 			if (!dropSquadHasTransport && (unit->getType().spaceProvided() > 0 && unit->isFlying()))
 			{
+				// assigns shuttle to squad
 				_squadData.assignUnitToSquad(unit, dropSquad);
 				dropSquadHasTransport = true;
+				
 				continue;
 			}
-
+			// cannot fit in shuttle
 			if (unit->getType().spaceRequired() > transportSpotsRemaining)
 			{
 				continue;
@@ -223,15 +239,58 @@ void CombatCommander::updateReaverDropSquads()
 			{
 				_squadData.assignUnitToSquad(unit, dropSquad);
 				transportSpotsRemaining -= unit->getType().spaceRequired();
+				
+				/*
+				// we have to load them don't we?
+				// we have a shuttle
+				// 3 is kinda(? is it?) arbritrary atm
+				if (dropSquadHasTransport && transportSpotsRemaining < 3) 
+				{
+					// find the shuttle, there must be a more efficient way to do this
+					// reason i don't know how (i want to get a reference to the flying unit beforehand)
+					// is that i don't know what type of reference it should be??? set it in the first for loop
+					for (auto & unitFlying : dropUnits)
+					{
+						if (unitFlying->isFlying())
+						{
+							unitFlying->load(unit);
+							break;
+						}
+					}
+				}
+				*/
+				
 			}
 		}
 	}
 	// otherwise the drop squad is full, so execute the order
 	else
 	{
-		SquadOrder dropOrder(SquadOrderTypes::Drop, getMainAttackLocation(), 800, "Attack Enemy Base");
+		// we have to actually load them....
+		for (auto & unitFlying : dropUnits)
+		{
+			// find the flying unit
+			if (unitFlying->isFlying())
+			{
+				// load them
+				for (auto & unit : dropUnits)
+				{
+					// don't load the shuttle itself? can it even do that?
+					if (!unit->isFlying()){
+						unitFlying->load(unit);
+					}
+				}
+				
+				break;
+			}
+		}
+
+		SquadOrder dropOrder(SquadOrderTypes::ReaverDrop, getMainAttackLocation(), 800, "Attack Enemy Base");
 		dropSquad.setSquadOrder(dropOrder);
 	}
+
+	// debug, check if anyone in squad
+	//BWAPI::Broodwar->printf("My squad has %d", dropUnits.size());
 }
 
 void CombatCommander::updateScoutDefenseSquad() 
@@ -297,6 +356,9 @@ void CombatCommander::updateScoutDefenseSquad()
 
         scoutDefenseSquad.clear();
     }
+
+	
+
 }
 
 void CombatCommander::updateDefenseSquads() 
