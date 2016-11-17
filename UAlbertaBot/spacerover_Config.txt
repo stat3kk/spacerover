@@ -49,16 +49,16 @@
         "DrawModuleTimers"          : false,
         "DrawResourceInfo"          : false,
         "DrawCombatSimInfo"         : false,
-        "DrawUnitTargetInfo"        : false,
+        "DrawUnitTargetInfo"        : true,
         "DrawBWTAInfo"              : false,
         "DrawMapGrid"               : false,
-        "DrawSquadInfo"             : false,
+        "DrawSquadInfo"             : true,
         "DrawWorkerInfo"            : false,
         "DrawMouseCursorInfo"       : false,
         "DrawBuildingInfo"          : false,
         "DrawReservedBuildingTiles" : false,
         "DrawBOSSStateInfo"         : false,
-        "PrintModuleTimeout"        : false
+        "PrintModuleTimeout"        : true
     },
     
     "Modules" :
@@ -83,12 +83,12 @@
         "Zerg"                      : "Zerg_ZerglingRush",
         
         "ScoutGasSteal"             : false,
-        "ScoutHarassEnemy"          : true,
+        "ScoutHarassEnemy"          : false,
         
         "ReadDirectory"             : "bwapi-data/read/",
         "WriteDirectory"            : "bwapi-data/write/",
                 
-        "UseEnemySpecificStrategy"  : true,
+        "UseEnemySpecificStrategy"  : false,
         "EnemySpecificStrategy"     :
         {
             "BotName1"              : { "Protoss" : "Protoss_ZealotRush", "Terran" : "Terran_VultureRush", "Zerg" : "Zerg_ZerglingRush" },
@@ -98,7 +98,7 @@
         
         "Strategies" :
         {
-            "Protoss_ReaverDrop"    : { "Race" : "Protoss", "OpeningBuildOrder" : ["Probe", "Probe", "Probe", "Probe", "Pylon", "Probe", "Probe", "Gateway", "Probe", "Assimilator", "Probe", "Probe", "Cybernetics_Core", "Probe", "Probe", "Probe", "Pylon", "Probe", "Probe", "Probe", "Probe", "Dragoon", "Singularity_Charge", "Pylon", "Probe", "Probe", "Probe", "Probe", "Dragoon", "Robotics Facility", "Pylon" ]},
+            "Protoss_ReaverDrop"    : { "Race" : "Protoss", "OpeningBuildOrder" : ["Probe", "Probe", "Probe", "Probe", "Pylon", "Probe", "Probe", "Gateway", "Probe", "Assimilator", "Probe", "Probe", "Cybernetics_Core", "Probe", "Probe", "Probe", "Pylon", "Probe", "Probe", "Probe", "Dragoon", "Dragoon", "Pylon", "Probe", "Probe", "Probe", "Probe", "Robotics Facility", "Singularity_Charge" ]},
             "Protoss_ZealotRush"    : { "Race" : "Protoss", "OpeningBuildOrder" : ["Probe", "Probe", "Probe", "Probe", "Pylon", "Probe", "Gateway", "Gateway", "Probe", "Probe", "Zealot", "Pylon", "Zealot", "Zealot",  "Probe", "Zealot", "Zealot", "Probe", "Pylon", "Zealot", "Gateway", "Probe", "Pylon", "Probe", "Zealot", "Probe", "Zealot", "Zealot", "Zealot", "Zealot", "Pylon", "Probe", "Zealot", "Zealot", "Zealot" ]},
             "Protoss_DragoonRush"   : { "Race" : "Protoss", "OpeningBuildOrder" : ["Probe", "Probe", "Probe", "Probe", "Pylon", "Probe", "Probe", "Gateway", "Probe", "Assimilator", "Probe", "Probe", "Cybernetics_Core", "Probe", "Probe", "Gateway", "Singularity_Charge", "Dragoon", "Gateway", "Pylon", "Dragoon", "Dragoon", "Probe", "Gateway", "Pylon", "Probe", "Dragoon", "Dragoon", "Dragoon"]},
             "Protoss_DTRush"        : { "Race" : "Protoss", "OpeningBuildOrder" : ["Probe", "Probe", "Probe", "Probe", "Pylon", "Probe", "Gateway", "Probe", "Assimilator", "Probe", "Cybernetics_Core", "Probe", "Citadel_of_Adun", "Probe", "Templar_Archives", "Gateway", "Dark_Templar", "Dark_Templar", "Pylon", "Dark_Templar", "Dark_Templar", "Probe", "Pylon", "Probe" ]},

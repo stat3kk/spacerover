@@ -156,42 +156,20 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 	// added strategy here
 	else if (Config::Strategy::StrategyName == "Protoss_ReaverDrop")
 	{
-		/*This was done just to test shuttle loading/unloading. Please change this*/
-		if (numShuttle == 0)
+		// lets try 2 shuttles, 2 reavers
+		if (numShuttle < 2)
 		{
-			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Shuttle, numShuttle + 1));
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Shuttle, 2 - numShuttle));
 		}
 		// make sure shuttles are out first
-		else if ((numShuttle > 0) && (numReaver == 0))
+		if (numReaver < 2)
 		{
-			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Reaver, numReaver + 1));
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Reaver, 2 - numReaver));
 		}
-		// a shuttle every 2 reavers for testing
-		// conditional on the lhs of and is to take care of division by zero
-		else if ((numShuttle > 0) && (numReaver/numShuttle) > 2)
-		{
-			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Shuttle, numShuttle + 1));
-		}
-		// I didn't need anymore zealots to test the shuttle so ... its ok we dont need zealots anyway
-		/*
-		else if (numZealots > 3)
-		{
-			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Reaver, numReaver + 1));
-		}
-		// I didn't need anymore zealots to test the shuttle so ...
-		else
-		{
-		//	goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 8));
-		}
-		*/
-		else 
-		{
-			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Reaver, numReaver + 4));
-		}
-		if (numNexusAll >= 2)
-		{
-			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 1));
-		}
+		// warped in from gateways so shouldn't interfere with dropship production
+		goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 4));
+		goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 1));
+
 	}
     else if (Config::Strategy::StrategyName == "Protoss_DTRush")
     {

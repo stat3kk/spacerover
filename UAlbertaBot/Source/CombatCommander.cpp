@@ -40,8 +40,8 @@ void CombatCommander::initializeSquads()
 	//add drop squad if we are using ReverDrop strat
 	if (Config::Strategy::StrategyName == "Protoss_ReaverDrop")
 	{
-		SquadOrder zealotDrop(SquadOrderTypes::Drop, ourBasePosition, 900, "Wait for transport");
-		_squadData.addSquad("ReaverDrop", Squad("ReaverDrop", zealotDrop, DropPriority));
+		SquadOrder reaverDrop(SquadOrderTypes::Drop, ourBasePosition, 900, "Wait for transport");
+		_squadData.addSquad("ReaverDrop", Squad("ReaverDrop", reaverDrop, DropPriority));
 	}
 
     _initialized = true;
@@ -74,7 +74,7 @@ void CombatCommander::update(const BWAPI::Unitset & combatUnits)
 		// so the ReaverDropSquad makes every unit wait even if the squad is full?
 		// make it so the updateReaverDropSquad returns immediatly on the frames at which the squad is full
 		updateReaverDropSquads();
-        updateDropSquads();
+        //updateDropSquads();
         updateScoutDefenseSquad();
 		updateDefenseSquads();
 		updateAttackSquads();
@@ -98,6 +98,11 @@ void CombatCommander::updateIdleSquad()
 
 void CombatCommander::updateAttackSquads()
 {
+	if (!_dropReady)
+	{
+		return;
+	}
+
     Squad & mainAttackSquad = _squadData.getSquad("MainAttack");
 
     for (auto & unit : _combatUnits)
@@ -106,6 +111,12 @@ void CombatCommander::updateAttackSquads()
         {
             continue;
         }
+
+		if (unit->getType() == BWAPI::UnitTypes::Protoss_Shuttle || unit->getType() == BWAPI::UnitTypes::Protoss_Reaver)
+		{
+			// reavers and shuttles are for drops
+			continue;
+		}
 
         // get every unit of a lower priority and put it into the attack squad
         if (!unit->getType().isWorker() && (unit->getType() != BWAPI::UnitTypes::Zerg_Overlord) && _squadData.canAssignUnitToSquad(unit, mainAttackSquad))
@@ -182,8 +193,7 @@ void CombatCommander::updateDropSquads()
     }
 }
 
-
-// problem here is that the squad doesn't include the shuttle itself.
+// our pride and joy
 void CombatCommander::updateReaverDropSquads()
 {
 	if (Config::Strategy::StrategyName != "Protoss_ReaverDrop")
@@ -195,88 +205,88 @@ void CombatCommander::updateReaverDropSquads()
 
 	// figure out how many units the drop squad needs
 	bool dropSquadHasTransport = false;
-	int transportSpotsRemaining = 8;
+	bool dropSquadHasReaver = false;
+	//int transportSpotsRemaining = 8;
+	int zealotSpotsRemaining = 2;
 	auto & dropUnits = dropSquad.getUnits(); 
 
+	// is the existing squad ready to go?
 	for (auto & unit : dropUnits)
 	{
+		// every drop squad needs a shuttle
 		if (unit->isFlying() && unit->getType().spaceProvided() > 0)
 		{
-			//there exists a shuttle
 			dropSquadHasTransport = true;
+			continue;
 		}
-		else
+		// every drop squad also needs a reaver
+		else if (unit->getType() == BWAPI::UnitTypes::Protoss_Reaver)
 		{
-			// we picked something up
-			transportSpotsRemaining -= unit->getType().spaceRequired();
+			dropSquadHasReaver = true;
+			continue;
+		}
+		if (zealotSpotsRemaining == 0)
+		{
+			continue;
+		}
+		else if (unit->getType() == BWAPI::UnitTypes::Protoss_Zealot)
+		{
+			// 2 zealots per shuttle
+			zealotSpotsRemaining -= 1;
 		}
 	}
 
 	// if there are still units to be added to the drop squad, do it
-	if (transportSpotsRemaining > 0 || !dropSquadHasTransport)
+	if (zealotSpotsRemaining > 0 || (!dropSquadHasTransport || !dropSquadHasReaver))
 	{
-		// take our first amount of combat units that fill up a transport and add them to the drop squad
 		for (auto & unit : _combatUnits)
 		{
-			// if this is a transport unit and we don't have one in the squad yet, add it
-			// the if statement is looking for a shuttle
+			// if this is a shuttle and we need one in the squad, add it
 			if (!dropSquadHasTransport && (unit->getType().spaceProvided() > 0 && unit->isFlying()))
 			{
-				// assigns shuttle to squad
+				// assign shuttle to squad
 				_squadData.assignUnitToSquad(unit, dropSquad);
 				dropSquadHasTransport = true;
 				
 				continue;
 			}
-			// cannot fit in shuttle
-			if (unit->getType().spaceRequired() > transportSpotsRemaining)
+			// if this is a reaver and we need one in the squad, add it
+			if (!dropSquadHasReaver && (unit->getType() == BWAPI::UnitTypes::Protoss_Reaver))
 			{
+				// assign shuttle to squad
+				_squadData.assignUnitToSquad(unit, dropSquad);
+				dropSquadHasTransport = true;
+
 				continue;
 			}
-
-			// get every unit of a lower priority and put it into the attack squad
-			if (!unit->getType().isWorker() && _squadData.canAssignUnitToSquad(unit, dropSquad))
+			// fill up the zealot slots
+			if (_squadData.canAssignUnitToSquad(unit, dropSquad) && unit->getType() == BWAPI::UnitTypes::Protoss_Zealot && zealotSpotsRemaining > 0)
 			{
 				_squadData.assignUnitToSquad(unit, dropSquad);
-				transportSpotsRemaining -= unit->getType().spaceRequired();
-				
-				/*
-				// we have to load them don't we?
-				// we have a shuttle
-				// 3 is kinda(? is it?) arbritrary atm
-				if (dropSquadHasTransport && transportSpotsRemaining < 3) 
-				{
-					// find the shuttle, there must be a more efficient way to do this
-					// reason i don't know how (i want to get a reference to the flying unit beforehand)
-					// is that i don't know what type of reference it should be??? set it in the first for loop
-					for (auto & unitFlying : dropUnits)
-					{
-						if (unitFlying->isFlying())
-						{
-							unitFlying->load(unit);
-							break;
-						}
-					}
-				}
-				*/
-				
+				zealotSpotsRemaining -= 1;
 			}
 		}
+		// debug
+		if (!dropSquadHasTransport) { BWAPI::Broodwar->printf("Waiting for shuttle, current: %d\n", UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Shuttle)); }
+		if (!dropSquadHasReaver) { BWAPI::Broodwar->printf("Waiting for reaver, current: %d\n", UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Reaver)); }
+		if (zealotSpotsRemaining > 0) { BWAPI::Broodwar->printf("Waiting for zealots, current: %d\n", UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Zealot)); }
 	}
-	// otherwise the drop squad is full, so execute the order
+	// drop squad is ready to roll (or already rolling out)
 	else
 	{
-		// we have to actually load them....
+		_dropReady = true;
+		// load em up
 		for (auto & unitFlying : dropUnits)
 		{
-			// find the flying unit
+			// find the shuttle
 			if (unitFlying->isFlying())
 			{
-				// load them
+				// load the rest of the squad in (if not already inside)
 				for (auto & unit : dropUnits)
 				{
 					// don't load the shuttle itself? can it even do that?
-					if (!unit->isFlying()){
+					if (!unit->isFlying())
+					{
 						unitFlying->load(unit);
 					}
 				}
@@ -285,6 +295,7 @@ void CombatCommander::updateReaverDropSquads()
 			}
 		}
 
+		// hmmm TransportManager handles this for the shuttle, not sure about the other units
 		SquadOrder dropOrder(SquadOrderTypes::ReaverDrop, getMainAttackLocation(), 800, "Attack Enemy Base");
 		dropSquad.setSquadOrder(dropOrder);
 	}
