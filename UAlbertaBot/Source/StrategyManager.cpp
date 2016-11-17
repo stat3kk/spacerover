@@ -188,6 +188,16 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 		}
 	}
 
+    // set up cannons to save self
+    if (InformationManager::Instance().enemyIsRushing()) {
+
+        // need to check to see if we have the building to make photon cannons
+        //if (BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Forge)) {
+           goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Photon_Cannon));
+        //}
+
+    }
+
     // if we want to expand, insert a nexus into the build order
 	if (shouldExpandNow())
 	{

@@ -580,3 +580,21 @@ bool InformationManager::enemyHasCloakedUnits()
 
 	return false;
 }
+
+bool InformationManager::enemyIsRushing() 
+{
+	int rush_units = 0; // keep track of how many units are found
+	for (const auto & kv : getUnitData(_enemy).getUnits()) 
+	{
+		const UnitInfo & ui(kv.second);
+
+		// check to see if there are multiple types of rushing units
+		if (ui.type == BWAPI::UnitTypes::Zerg_Zergling) {
+			rush_units++;
+		}
+
+		if (rush_units >= 4) { // rush probably coming. DO SOMETHING
+			return true;
+		}
+	}
+}
