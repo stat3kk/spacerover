@@ -2,6 +2,15 @@
 
 using namespace UAlbertaBot;
 
+/*
+DropState::DropState() :
+	_leftBase(false)
+	, _hasDropped(false)
+	, _orientation(1)
+{
+
+}
+*/
 TransportManager::TransportManager() :
 	_transportShip(NULL)
 	, _currentRegionVertexIndex(-1)
@@ -9,7 +18,14 @@ TransportManager::TransportManager() :
 	, _maxCorner(-1,-1)
 	, _to(-1,-1)
 	, _from(-1,-1)
+	, _leftBase(false)
+	, _hasDropped(false)
+	, _returning(false)
+	, _orientation(1)
 {
+	
+	
+
 }
 
 void TransportManager::executeMicro(const BWAPI::Unitset & targets) 
@@ -134,12 +150,9 @@ void TransportManager::update()
 	// check if there is still space on the transport ship remaining
 	// I want to play with this later on, as of now it can only move 
 	// if there is a full (?) squad
-	if (_transportShip)
+	if (_transportShip && (_transportShip->getSpaceRemaining() > 2))
 	{
-		if (_transportShip->getSpaceRemaining() > 2)
-		{
-			return; 
-		}
+		return; 
 	}
 	
 	// calculate enemy region vertices if we haven't yet
@@ -161,6 +174,13 @@ void TransportManager::moveTransport()
 		return;
 	}
 
+	/*
+	if (_returning)
+	{
+		followPerimeter(_returning);
+	}
+	*/
+
 	// If I didn't finish unloading the troops, wait
 	BWAPI::UnitCommand currentCommand(_transportShip->getLastCommand());
 	if ((currentCommand.getType() == BWAPI::UnitCommandTypes::Unload_All 
@@ -170,6 +190,13 @@ void TransportManager::moveTransport()
 		return;
 	}
 	
+
+	
+	// we are finished unloading troops and now we want to head back
+	
+
+	//
+
 	if (_to.isValid() && _from.isValid())
 	{
 		// I don't know what this does ... but it doesn't run
@@ -177,11 +204,16 @@ void TransportManager::moveTransport()
 	}
 	else
 	{
+		// we have left the base
+		_leftBase = true;
 		// This runs when we are full of troops
-		followPerimeter();
+		//followPerimeter(_to, _from);
+		followPerimeter(_returning);
 	}
 }
 
+
+// this whole thing needs to be changed when we take our reavers away from the enemy base 
 void TransportManager::moveTroops()
 {
 	if (!_transportShip || !_transportShip->exists() || !(_transportShip->getHitPoints() > 0))
@@ -193,6 +225,10 @@ void TransportManager::moveTroops()
 	
 	BWTA::BaseLocation * enemyBaseLocation = InformationManager::Instance().getMainBaseLocation(BWAPI::Broodwar->enemy());
 
+	/* 
+	(if we know the enemyBaseLocation, and the distance to the enemy base is less than 300,
+	or the transport has less than 100 hp)
+	in addition to the above condition, only if we can unload at our current position*/
 	if (enemyBaseLocation && (_transportShip->getDistance(enemyBaseLocation->getPosition()) < 300 || transportHP < 100)
 		&& _transportShip->canUnloadAtPosition(_transportShip->getPosition()))
 	{
@@ -208,24 +244,40 @@ void TransportManager::moveTroops()
 			return;
 		}
 
+
 		//else unload
-		_transportShip->unloadAll(_transportShip->getPosition());
+		_hasDropped = true;
+		// attacking enemy base
+		if (!_returning) 
+		{
+			_transportShip->unloadAll(_transportShip->getPosition());
+		} 
+
 	}
 	
 }
 
-void TransportManager::followPerimeter(int clockwise)
+// ... how does this even work? what if i want it to go back to my base????
+void TransportManager::followPerimeter(bool returning, int clockwise)
 {
 	BWAPI::Position goTo = getFleePosition(clockwise);
+	// the if statement below does not work
+	if (returning)
+	{
+		//BWAPI::Broodwar->printf("Returning is true");
+		BWTA::BaseLocation * myBaseLocation = InformationManager::Instance().getMainBaseLocation(BWAPI::Broodwar->self());
+		goTo = myBaseLocation->getPosition();
+	}
 
 	if (Config::Debug::DrawUnitTargetInfo)
 	{
-		BWAPI::Broodwar->drawCircleMap(goTo, 5, BWAPI::Colors::Red, true);
+		BWAPI::Broodwar->drawCircleMap(goTo, 5, BWAPI::Colors::Brown, true);
 	}
 
 	Micro::SmartMove(_transportShip, goTo);
 }
 
+// you don't work do you????
 void TransportManager::followPerimeter(BWAPI::Position to, BWAPI::Position from)
 {
 	static int following = 0;
@@ -386,8 +438,6 @@ std::pair<int,int> TransportManager::findSafePath(BWAPI::Position to, BWAPI::Pos
 BWAPI::Position TransportManager::getFleePosition(int clockwise)
 {
 	UAB_ASSERT_WARNING(!_mapEdgeVertices.empty(), "We should have a transport route!");
-
-	//BWTA::BaseLocation * enemyBaseLocation = InformationManager::Instance().getMainBaseLocation(BWAPI::Broodwar->enemy());
 
 	// if this is the first flee, we will not have a previous perimeter index
 	if (_currentRegionVertexIndex == -1)

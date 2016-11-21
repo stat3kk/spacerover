@@ -156,19 +156,30 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 	// added strategy here
 	else if (Config::Strategy::StrategyName == "Protoss_ReaverDrop")
 	{
-		// lets try 2 shuttles, 2 reavers
-		if (numShuttle < 2)
+
+		// start with 1 of each so i can test the reaver drop 
+		if (numReaver < 1)
 		{
-			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Shuttle, 2 - numShuttle));
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 4));
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Reaver, numReaver + 1));
 		}
-		// make sure shuttles are out first
-		if (numReaver < 2)
+		else if (numShuttle < 1)
 		{
-			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Reaver, 2 - numReaver));
+			//??????? 2 - numShuttle was the thing before ?????????????
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Shuttle, numShuttle + 1));
 		}
+		else
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 4));
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 1));
+		}
+		// make sure shuttles are out first. How about no??? Whats the point of having a shuttle with no
+		// attacking units?.
+		
 		// warped in from gateways so shouldn't interfere with dropship production
-		goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 4));
-		goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 1));
+		// It does interfere? Depends on our resources as well doesn't it?	
+		//goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 4));
+		//goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 1));
 
 	}
     else if (Config::Strategy::StrategyName == "Protoss_DTRush")

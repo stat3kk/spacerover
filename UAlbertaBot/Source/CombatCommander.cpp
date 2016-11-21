@@ -1,6 +1,9 @@
 #include "CombatCommander.h"
 #include "UnitUtil.h"
 
+#include "MicroManager.h"
+#include "RangedManager.h"
+
 using namespace UAlbertaBot;
 
 const size_t IdlePriority = 0;
@@ -43,6 +46,8 @@ void CombatCommander::initializeSquads()
 		SquadOrder reaverDrop(SquadOrderTypes::Drop, ourBasePosition, 900, "Wait for transport");
 		_squadData.addSquad("ReaverDrop", Squad("ReaverDrop", reaverDrop, DropPriority));
 	}
+
+	
 
     _initialized = true;
 }
@@ -137,6 +142,7 @@ void CombatCommander::updateDropSquads()
         return;
     }
 
+	
     Squad & dropSquad = _squadData.getSquad("Drop");
 
     // figure out how many units the drop squad needs
@@ -222,6 +228,16 @@ void CombatCommander::updateReaverDropSquads()
 		// every drop squad also needs a reaver
 		else if (unit->getType() == BWAPI::UnitTypes::Protoss_Reaver)
 		{
+			// we have to train the scarabs here? ... apparently ... after the last push on git
+			// the scarabs wouldn't train anymore using the ualberta bot function wtf
+			if (!dropSquad._transportManager._leftBase) 
+			{
+				for (int i = 0; i < 5; ++i)
+				{
+					unit->train(BWAPI::UnitTypes::Protoss_Scarab);
+				}
+			}
+			
 			dropSquadHasReaver = true;
 			continue;
 		}
@@ -253,8 +269,9 @@ void CombatCommander::updateReaverDropSquads()
 			// if this is a reaver and we need one in the squad, add it
 			if (!dropSquadHasReaver && (unit->getType() == BWAPI::UnitTypes::Protoss_Reaver))
 			{
-				// assign shuttle to squad
+				// assign reaver to squad
 				_squadData.assignUnitToSquad(unit, dropSquad);
+				
 				dropSquadHasTransport = true;
 
 				continue;
@@ -267,41 +284,69 @@ void CombatCommander::updateReaverDropSquads()
 			}
 		}
 		// debug
-		if (!dropSquadHasTransport) { BWAPI::Broodwar->printf("Waiting for shuttle, current: %d\n", UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Shuttle)); }
-		if (!dropSquadHasReaver) { BWAPI::Broodwar->printf("Waiting for reaver, current: %d\n", UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Reaver)); }
-		if (zealotSpotsRemaining > 0) { BWAPI::Broodwar->printf("Waiting for zealots, current: %d\n", UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Zealot)); }
+		//if (!dropSquadHasTransport) { BWAPI::Broodwar->printf("Waiting for shuttle, current: %d\n", UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Shuttle)); }
+		//if (!dropSquadHasReaver) { BWAPI::Broodwar->printf("Waiting for reaver, current: %d\n", UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Reaver)); }
+		//if (zealotSpotsRemaining > 0) { BWAPI::Broodwar->printf("Waiting for zealots, current: %d\n", UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Zealot)); }
 	}
 	// drop squad is ready to roll (or already rolling out)
 	else
 	{
 		_dropReady = true;
 		// load em up
-		for (auto & unitFlying : dropUnits)
+
+		// we can access the _transportManager from dropSquad
+		// if we have not left the base yet
+		if (! dropSquad._transportManager._leftBase)
 		{
-			// find the shuttle
-			if (unitFlying->isFlying())
+			for (auto & unitFlying : dropUnits)
 			{
-				// load the rest of the squad in (if not already inside)
-				for (auto & unit : dropUnits)
+				// find the shuttle
+				if (unitFlying->isFlying())
 				{
-					// don't load the shuttle itself? can it even do that?
-					if (!unit->isFlying())
+					// load the rest of the squad in (if not already inside)
+					for (auto & unit : dropUnits)
 					{
-						unitFlying->load(unit);
+						// don't load the shuttle itself? can it even do that?
+						if (!unit->isFlying())
+						{
+							unitFlying->load(unit);
+						}
+					}
+
+					break;
+				}
+			}
+			//return;
+		}
+		else // we have left base
+		{
+			// look for reavers
+			for (auto & unit : dropUnits)
+			{
+				// shot all our scarabs
+				if ((unit->getType() == BWAPI::UnitTypes::Protoss_Reaver) && (unit->getScarabCount() == 0))
+				{	// so we pick up the reaver and fly back to base
+					for (auto & unitFlying : dropUnits)
+					{
+						if (unitFlying->isFlying())
+						{
+							unitFlying->load(unit);
+							// yea this below part ... idk how follow perimeter works
+							dropSquad._transportManager._returning = true;
+							break;
+						}
 					}
 				}
-				
-				break;
 			}
 		}
+		
 
 		// hmmm TransportManager handles this for the shuttle, not sure about the other units
 		SquadOrder dropOrder(SquadOrderTypes::ReaverDrop, getMainAttackLocation(), 800, "Attack Enemy Base");
 		dropSquad.setSquadOrder(dropOrder);
 	}
 
-	// debug, check if anyone in squad
-	//BWAPI::Broodwar->printf("My squad has %d", dropUnits.size());
+	
 }
 
 void CombatCommander::updateScoutDefenseSquad() 

@@ -18,12 +18,14 @@ class TransportManager : public MicroManager
 	BWAPI::Position					_to;
 	BWAPI::Position					_from;
 
+
+
 	void							calculateMapEdgeVertices();
 	void							drawTransportInformation(int x, int y);
 	void							moveTransport();
 	void							moveTroops();
 	BWAPI::Position                 getFleePosition(int clockwise=1);
-	void                            followPerimeter(int clockwise=1);
+	void                            followPerimeter(bool returning, int clockwise = 1);
 	void							followPerimeter(BWAPI::Position to, BWAPI::Position from);
 	int                             getClosestVertexIndex(BWAPI::UnitInterface * unit);
 	int								getClosestVertexIndex(BWAPI::Position p);
@@ -33,6 +35,11 @@ public:
 
 	TransportManager();
 
+	bool _leftBase;
+	bool _hasDropped;
+	bool _returning;
+	int _orientation;
+
 	void							executeMicro(const BWAPI::Unitset & targets);
 	void							update();
 	void							setTransportShip(BWAPI::UnitInterface * unit);
@@ -40,3 +47,18 @@ public:
 	void							setTo(BWAPI::Position to);
 };
 }
+
+/*
+class DropState
+{
+public:
+
+	DropState();
+
+	bool _leftBase;
+	bool _hasDropped;
+	bool _orientation;
+
+};
+*/
+//extern DropState dropState0;
