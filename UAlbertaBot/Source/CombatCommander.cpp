@@ -332,6 +332,7 @@ void CombatCommander::updateReaverDropSquads()
 						{
 							unitFlying->load(unit);
 							// yea this below part ... idk how follow perimeter works
+
 							dropSquad._transportManager._returning = true;
 							break;
 						}

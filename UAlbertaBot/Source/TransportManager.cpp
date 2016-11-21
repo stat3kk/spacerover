@@ -147,12 +147,16 @@ void TransportManager::update()
         _transportShip = *getUnits().begin();
     }
 	
-	// check if there is still space on the transport ship remaining
-	// I want to play with this later on, as of now it can only move 
-	// if there is a full (?) squad
-	if (_transportShip && (_transportShip->getSpaceRemaining() > 2))
+	// if we are not returning to our base and we still need to load more units
+	if (_transportShip && (_transportShip->getSpaceRemaining() > 0) && ! _returning)
 	{
 		return; 
+	}
+	// we plan to return to our base and we have not picked up our reaver, wait until reaver is picked up 
+	//*** check if reaver is dead (not implemented yet)
+	else if (_returning && (_transportShip->getSpaceRemaining() > 5))
+	{
+		return;
 	}
 	
 	// calculate enemy region vertices if we haven't yet
@@ -160,6 +164,7 @@ void TransportManager::update()
 	{
 		calculateMapEdgeVertices();
 	}
+
 
 	moveTroops();
 	moveTransport();
