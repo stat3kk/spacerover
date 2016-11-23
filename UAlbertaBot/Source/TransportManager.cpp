@@ -1,4 +1,5 @@
 #include "TransportManager.h"
+#include "UnitUtil.h"
 
 using namespace UAlbertaBot;
 
@@ -30,7 +31,7 @@ TransportManager::TransportManager() :
 
 void TransportManager::executeMicro(const BWAPI::Unitset & targets) 
 {
-	// I assume this is the units in the drop squad
+	// I assume this is the units in the drop squad. Nope this just finds the shuttle
 	const BWAPI::Unitset & transportUnits = getUnits();
 
 	if (transportUnits.empty())
@@ -225,17 +226,30 @@ void TransportManager::moveTroops()
 	{
 		return;
 	}
-	//unload zealots if close enough or dying
+	//unload zealots and reavers if close enough or dying
 	int transportHP = _transportShip->getHitPoints() + _transportShip->getShields();
 	
 	BWTA::BaseLocation * enemyBaseLocation = InformationManager::Instance().getMainBaseLocation(BWAPI::Broodwar->enemy());
 
+	int weaponRange = BWAPI::WeaponTypes::Scarab.maxRange();
+	int radiusOfShuttle = weaponRange; // this can be changed to determine the radius at which we find our enemy units
+
+	// why use radiusOfShuttle here??? we don't need to. We can totally search the all the enemy units if we want?
+	BWAPI::Unit target = assignTargetsOld(_transportShip->getUnitsInRadius(radiusOfShuttle * 3, BWAPI::Filter::IsEnemy));
+	
 	/* 
-	(if we know the enemyBaseLocation, and the distance to the enemy base is less than 300,
-	or the transport has less than 100 hp)
-	in addition to the above condition, only if we can unload at our current position*/
-	if (enemyBaseLocation && (_transportShip->getDistance(enemyBaseLocation->getPosition()) < 300 || transportHP < 100)
+	look for target withing reaver(scarab?) attack range
+	then UAlbertaBot's default conditional checks
+	*/
+	if 
+		(
+		// checks if target is within weapon range of reaver (might want to add a buffer)
+		( (target != NULL) && (_transportShip->getDistance(target) < weaponRange) ) ||
+		// things already in UalbertaBot transportManager
+		(enemyBaseLocation && (_transportShip->getDistance(enemyBaseLocation->getPosition()) < 300 || transportHP < 100)
 		&& _transportShip->canUnloadAtPosition(_transportShip->getPosition()))
+		
+		)
 	{
 		//unload troops 
 		//and return? 
@@ -495,4 +509,137 @@ void TransportManager::setTo(BWAPI::Position to)
 {
 	if (to.isValid())
 		_to = to;
+}
+
+
+BWAPI::Unit TransportManager::assignTargetsOld(const BWAPI::Unitset & targets)
+{
+	// do i need this tbh?
+	// i can just use _transportShip can't I?
+	// i think so
+	//const BWAPI::Unitset & rangedUnits = getUnits();
+
+	// figure out targets
+	BWAPI::Unitset reaverUnitTargets;
+	std::copy_if(targets.begin(), targets.end(), std::inserter(reaverUnitTargets, reaverUnitTargets.end()), [](BWAPI::Unit u){ return u->isVisible(); });
+
+	// if there are targets
+	if (!reaverUnitTargets.empty())
+	{
+		// find the best target for the reaver (so the shuttle can drop)
+		BWAPI::Unit target = getTarget(_transportShip, reaverUnitTargets);
+
+		if (target && Config::Debug::DrawUnitTargetInfo)
+		{
+			BWAPI::Broodwar->drawLineMap(_transportShip->getPosition(), _transportShip->getTargetPosition(), BWAPI::Colors::Purple);
+		}
+
+		return target;
+		// if there are no targets
+	}
+	else
+	{
+		return NULL;
+	}
+	
+}
+
+BWAPI::Unit TransportManager::getTarget(BWAPI::Unit shuttleUnit, const BWAPI::Unitset & targets)
+{
+	int bestPriorityDistance = 1000000;
+	int bestPriority = 0;
+
+	double bestLTD = 0;
+
+	int highPriority = 0;
+	double closestDist = std::numeric_limits<double>::infinity();
+	BWAPI::Unit closestTarget = nullptr;
+
+	for (const auto & target : targets)
+	{
+		double distance = shuttleUnit->getDistance(target);
+		double LTD = UnitUtil::CalculateLTD(target, shuttleUnit);
+		int priority = getAttackPriority(shuttleUnit, target);
+		// Do we need this? because are we really checking the threat of the enemy unit to the shuttle?
+		// or is it the threat of the enemy unit to the reaver???
+		bool targetIsThreat = LTD > 0;
+
+		if (!closestTarget || (priority > highPriority) || (priority == highPriority && distance < closestDist))
+		{
+			closestDist = distance;
+			highPriority = priority;
+			closestTarget = target;
+		}
+	}
+
+	return closestTarget;
+} 
+
+// get the attack priority of a type in relation to a zergling??
+// do we really want to target enemy worker instead?
+int TransportManager::getAttackPriority(BWAPI::Unit reaverUnit, BWAPI::Unit target)
+{
+	BWAPI::UnitType rangedType = reaverUnit->getType();
+	BWAPI::UnitType targetType = target->getType();
+
+	bool isThreat = rangedType.isFlyer() ? targetType.airWeapon() != BWAPI::WeaponTypes::None : targetType.groundWeapon() != BWAPI::WeaponTypes::None;
+
+	if (target->getType().isWorker())
+	{
+		isThreat = false;
+	}
+
+	if (target->getType() == BWAPI::UnitTypes::Zerg_Larva || target->getType() == BWAPI::UnitTypes::Zerg_Egg)
+	{
+		return 0;
+	}
+
+
+
+	// if the target is building something near our base something is fishy
+	BWAPI::Position ourBasePosition = BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation());
+	if (target->getType().isWorker() && (target->isConstructing() || target->isRepairing()) && target->getDistance(ourBasePosition) < 1200)
+	{
+		return 100;
+	}
+
+	if (target->getType().isBuilding() && (target->isCompleted() || target->isBeingConstructed()) && target->getDistance(ourBasePosition) < 1200)
+	{
+		return 90;
+	}
+
+	// highest priority is something that can attack us or aid in combat
+	if (targetType == BWAPI::UnitTypes::Terran_Bunker || isThreat)
+	{
+		return 11;
+	}
+	// next priority is worker
+	else if (targetType.isWorker())
+	{
+		return 11;
+	}
+	// next is special buildings
+	else if (targetType == BWAPI::UnitTypes::Zerg_Spawning_Pool)
+	{
+		return 5;
+	}
+	// next is special buildings
+	else if (targetType == BWAPI::UnitTypes::Protoss_Pylon)
+	{
+		return 5;
+	}
+	// next is buildings that cost gas
+	else if (targetType.gasPrice() > 0)
+	{
+		return 4;
+	}
+	else if (targetType.mineralPrice() > 0)
+	{
+		return 3;
+	}
+	// then everything else
+	else
+	{
+		return 1;
+	}
 }

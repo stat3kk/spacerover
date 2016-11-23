@@ -323,20 +323,41 @@ void CombatCommander::updateReaverDropSquads()
 			// look for reavers
 			for (auto & unit : dropUnits)
 			{
-				// shot all our scarabs
-				if ((unit->getType() == BWAPI::UnitTypes::Protoss_Reaver) && (unit->getScarabCount() == 0))
+				
+				// find the reavers
+				//if ((unit->getType() == BWAPI::UnitTypes::Protoss_Reaver) && (! unit->isAttacking()))
+				if ((unit->getType() == BWAPI::UnitTypes::Protoss_Reaver) )
+				
 				{	// so we pick up the reaver and fly back to base
+					 
+					// look for the shuttle
 					for (auto & unitFlying : dropUnits)
 					{
+						// the shuttle
 						if (unitFlying->isFlying())
 						{
-							unitFlying->load(unit);
-							// yea this below part ... idk how follow perimeter works
-
-							dropSquad._transportManager._returning = true;
+							// if we ran out of scarabs
+							if (unit->getScarabCount() == 0) {
+								unitFlying->load(unit);
+								// yea this below part ... idk how follow perimeter works
+								dropSquad._transportManager._returning = true;
+							}
+							// make sure we unload everything
+							else if (unitFlying->getSpaceRemaining() == 8)
+							{
+								// move the shuttle to the reaver position if we did not pick it up yet
+								// the getDistance > 5 is a work around for a bug where the shuttle will keep
+								// trying to move towards the reaver? and will be stuck on that command instead
+								// of picking up the reaver.
+								if (unitFlying->getDistance(unit) > 5) {
+									unitFlying->move(unit->getPosition());
+								}
+							}
 							break;
 						}
 					}
+			
+
 				}
 			}
 		}

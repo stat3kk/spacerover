@@ -3,6 +3,7 @@
 #include <Common.h>
 #include "MicroManager.h"
 
+
 namespace UAlbertaBot
 {
 class MicroManager;
@@ -45,6 +46,12 @@ public:
 	void							setTransportShip(BWAPI::UnitInterface * unit);
 	void							setFrom(BWAPI::Position from);
 	void							setTo(BWAPI::Position to);
+	// similar to ranged manager, but this time we want to return a target.?
+	// changes are made here
+	BWAPI::Unit						assignTargetsOld(const BWAPI::Unitset & targets);
+	BWAPI::Unit						getTarget(BWAPI::Unit rangedUnit, const BWAPI::Unitset & targets);
+	int								getAttackPriority(BWAPI::Unit rangedUnit, BWAPI::Unit target);
+
 };
 }
 
