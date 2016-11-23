@@ -1,5 +1,6 @@
 #include "Common.h"
 #include "InformationManager.h"
+#include <list>
 
 using namespace UAlbertaBot;
 
@@ -587,14 +588,21 @@ bool InformationManager::enemyIsRushing()
 	for (const auto & kv : getUnitData(_enemy).getUnits()) 
 	{
 		const UnitInfo & ui(kv.second);
-
+		std::cout << "CHECKING IF RUSH" << std::endl;
+		std::cout << ui.type << std::endl;
 		// check to see if there are multiple types of rushing units
 		if (ui.type == BWAPI::UnitTypes::Zerg_Zergling) {
 			rush_units++;
+			std::cout << ui.type << std::endl;
 		}
 
 		if (rush_units >= 4) { // rush probably coming. DO SOMETHING
 			return true;
 		}
+		else {
+			return false;
+		}
+	
 	}
+	return false;
 }

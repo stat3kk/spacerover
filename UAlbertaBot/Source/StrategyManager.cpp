@@ -193,7 +193,7 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 
         // need to check to see if we have the building to make photon cannons
         //if (BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Forge)) {
-           goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Photon_Cannon));
+           goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Photon_Cannon, 1));
         //}
 
     }
