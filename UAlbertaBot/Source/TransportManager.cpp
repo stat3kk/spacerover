@@ -20,9 +20,8 @@ TransportManager::TransportManager() :
 	, _to(-1,-1)
 	, _from(-1,-1)
 	, _leftBase(false)
-	, _hasDropped(false)
 	, _returning(false)
-	, _orientation(1)
+	, _nearReaver(false)
 {
 	
 	
@@ -141,30 +140,21 @@ void TransportManager::update()
 	int transportSpotsRemaining = 8;
 	int unitSpace = 0;
 	
-	// Why bother with 'getUnits().size()?????'
-	// It returned 1 or 0 when I checked ...
+	// size is either 0 or 1 ... not going to touch this
 	if (!_transportShip && getUnits().size() > 0)
     {
         _transportShip = *getUnits().begin();
     }
 	
 	/*
-	if (_leftBase) {
-
-	}
+	this is specifically for when we are in our base
+	if we are not returning to our base and we still need to load more units
 	*/
-	// if we are not returning to our base and we still need to load more units
-	if (_transportShip && (_transportShip->getSpaceRemaining() > 0) && ! _returning)
+	if (_transportShip && (_transportShip->getSpaceRemaining() > 0) && !_returning && !_leftBase)
 	{
 		return; 
 	}
 
-	// we plan to return to our base and we have not picked up our reaver, wait until reaver is picked up 
-	//*** check if reaver is dead (not implemented yet)
-	//else if (_returning && (_transportShip->getSpaceRemaining() > 5))
-	//{
-	//	return;
-	//}
 	
 	// calculate enemy region vertices if we haven't yet
 	if (_mapEdgeVertices.empty())
@@ -172,11 +162,10 @@ void TransportManager::update()
 		calculateMapEdgeVertices();
 	}
 
-
 	moveTroops();
 
+	/* if we want to return but we haven't loaded the reaver */
 	if (_transportShip && _returning && _transportShip->getSpaceRemaining() > 5){
-		BWAPI::Broodwar->printf("AfterMoveTroops");
 		return;
 	}
 
@@ -192,29 +181,18 @@ void TransportManager::moveTransport()
 		return;
 	}
 
-	/*
-	if (_returning)
-	{
-		followPerimeter(_returning);
-	}
-	*/
-
 	// If I didn't finish unloading the troops, wait
 	BWAPI::UnitCommand currentCommand(_transportShip->getLastCommand());
 	if ((currentCommand.getType() == BWAPI::UnitCommandTypes::Unload_All 
-	 || currentCommand.getType() == BWAPI::UnitCommandTypes::Unload_All_Position)
-	 && _transportShip->getLoadedUnits().size() > 0)
+		 || currentCommand.getType() == BWAPI::UnitCommandTypes::Unload_All_Position)
+		&& _transportShip->getLoadedUnits().size() > 0)
 	{
 		return;
 	}
 	
-
-	
 	// we are finished unloading troops and now we want to head back
-	
 
-	//
-
+	// never true...
 	if (_to.isValid() && _from.isValid())
 	{
 		// I don't know what this does ... but it doesn't run
@@ -224,39 +202,58 @@ void TransportManager::moveTransport()
 	{
 		// we have left the base
 		_leftBase = true;
-		// This runs when we are full of troops
-		//followPerimeter(_to, _from);
+
+		/*
+			PROBLEM HERE
+			SHUTTLE TRIES TO GO FOWARD FOR A BIT BEFORE RETURNING
+			IS THIS REALLY A PROBLEM WORTH MY TIME??? idk man....
+		*/
+
+		/*we want to retreat*/ 
 		if (_returning)
 		{
+			/*make sure we have picked up the reaver*/ 
 			if (_transportShip->getSpaceRemaining() > 5){
-
 				return;
 			}
 			else
 			{
-				BWAPI::Broodwar->printf("Returning is true");
+				// retreat
 				followPerimeter(-1);
-				//BWTA::BaseLocation * myBaseLocation = InformationManager::Instance().getMainBaseLocation(BWAPI::Broodwar->self());
-				//goTo = myBaseLocation->getPosition();
 			}
 		}
-		else
+		/*not retreating*/
+		else 
 		{
-			followPerimeter(1);
+			// go towards enemy base
+			if (_transportShip->getSpaceRemaining() < 5)
+			{
+				followPerimeter(1);
+			}
+			else
+			{
+				// might want to move this back to combat commander?
+				// moves the shuttle to the reaver if we are currently using the reaver to attack
+				for (auto & reaver : _transportShip->getUnitsInRadius(BWAPI::WeaponTypes::Scarab.maxRange() * 4, BWAPI::Filter::IsAlly))
+				{
+					if (reaver->getType() == BWAPI::UnitTypes::Protoss_Reaver)
+					{
+						_transportShip->move(reaver->getPosition());
+					}
+				}
+			}
+
 		}
 	}
 }
 
 
-// this whole thing needs to be changed when we take our reavers away from the enemy base 
 void TransportManager::moveTroops()
 {
 	if (!_transportShip || !_transportShip->exists() || !(_transportShip->getHitPoints() > 0))
 	{
 		return;
 	}
-
-
 
 	//unload zealots and reavers if close enough or dying
 	int transportHP = _transportShip->getHitPoints() + _transportShip->getShields();
@@ -296,21 +293,12 @@ void TransportManager::moveTroops()
 			return;
 		}
 
-
-		//else unload
-		_hasDropped = true;
 		// attacking enemy base
-		if (!_returning) 
+		if (!_returning && _transportShip->getSpaceRemaining() < 5) 
 		{
 			_transportShip->unloadAll(_transportShip->getPosition());
 		}
-		/*else
-		{
-			
-			
-
-		}*/
-
+	
 	}
 	
 }
@@ -526,7 +514,7 @@ BWAPI::Position TransportManager::getFleePosition(int clockwise)
 			distanceFromCurrentVertex = _mapEdgeVertices[_currentRegionVertexIndex].getDistance(_transportShip->getPosition());
 		}
 		
-		BWAPI::Broodwar->printf("_returning %d Index %d", _returning, _currentRegionVertexIndex);
+		//BWAPI::Broodwar->printf("_returning %d Index %d", _returning, _currentRegionVertexIndex);
 		return _mapEdgeVertices[_currentRegionVertexIndex];
 	}
 
@@ -613,7 +601,7 @@ BWAPI::Unit TransportManager::getTarget(BWAPI::Unit shuttleUnit, const BWAPI::Un
 } 
 
 // get the attack priority of a type in relation to a zergling??
-// do we really want to target enemy worker instead?
+// do we really want to target enemy workers instead? I don't think so
 int TransportManager::getAttackPriority(BWAPI::Unit reaverUnit, BWAPI::Unit target)
 {
 	BWAPI::UnitType rangedType = reaverUnit->getType();
@@ -681,28 +669,29 @@ int TransportManager::getAttackPriority(BWAPI::Unit reaverUnit, BWAPI::Unit targ
 	}
 }
 
-
+// does it even need an input param? no
 bool TransportManager::scarabShot(BWAPI::Unit shuttle)
 {
-	// don't use it because i move the shuttle to the reaver
-	//int detectionRadius = shuttle->getDistance(reaver);
+	
 	for (auto & unit : shuttle->getUnitsInRadius(BWAPI::WeaponTypes::Scarab.maxRange(), BWAPI::Filter::IsAlly))
 	{
 		if (unit->getType() == BWAPI::UnitTypes::Protoss_Scarab)
 		{
-			// a scarab was shots
+			// a scarab was shot
 			return true;
 		}
 	}
 
+	/*a scarab was not shot*/
 	return false;
 
 }
 
+/*checks if the reaver is safe from enemy attacks*/
 bool TransportManager::isSafe(BWAPI::Unit reaver)
 {
 	// 128 is the scarabs weapon range, need to play around with then numbers
-	BWAPI::Unitset enemies = reaver->getUnitsInRadius(128 * 2, BWAPI::Filter::IsEnemy);
+	BWAPI::Unitset enemies = reaver->getUnitsInRadius(BWAPI::WeaponTypes::Scarab.maxRange() * 2, BWAPI::Filter::IsEnemy);
 
 	for (auto & enemy : enemies)
 	{

@@ -37,9 +37,8 @@ public:
 	TransportManager();
 
 	bool _leftBase;
-	bool _hasDropped;
 	bool _returning;
-	int _orientation;
+	bool _nearReaver;
 
 	void							executeMicro(const BWAPI::Unitset & targets);
 	void							update();
@@ -51,7 +50,10 @@ public:
 	BWAPI::Unit						assignTargetsOld(const BWAPI::Unitset & targets);
 	BWAPI::Unit						getTarget(BWAPI::Unit rangedUnit, const BWAPI::Unitset & targets);
 	int								getAttackPriority(BWAPI::Unit rangedUnit, BWAPI::Unit target);
+	// a bit different 
+	// checks if scarab was shot
 	bool							scarabShot(BWAPI::Unit shuttle);
+	// check if reaver is safe from enemy attacks
 	bool							isSafe(BWAPI::Unit reaver);
 
 };
