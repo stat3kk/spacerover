@@ -148,17 +148,23 @@ void TransportManager::update()
         _transportShip = *getUnits().begin();
     }
 	
+	/*
+	if (_leftBase) {
+
+	}
+	*/
 	// if we are not returning to our base and we still need to load more units
 	if (_transportShip && (_transportShip->getSpaceRemaining() > 0) && ! _returning)
 	{
 		return; 
 	}
+
 	// we plan to return to our base and we have not picked up our reaver, wait until reaver is picked up 
 	//*** check if reaver is dead (not implemented yet)
-	else if (_returning && (_transportShip->getSpaceRemaining() > 5))
-	{
-		return;
-	}
+	//else if (_returning && (_transportShip->getSpaceRemaining() > 5))
+	//{
+	//	return;
+	//}
 	
 	// calculate enemy region vertices if we haven't yet
 	if (_mapEdgeVertices.empty())
@@ -168,6 +174,12 @@ void TransportManager::update()
 
 
 	moveTroops();
+
+	if (_transportShip && _returning && _transportShip->getSpaceRemaining() > 5){
+		BWAPI::Broodwar->printf("AfterMoveTroops");
+		return;
+	}
+
 	moveTransport();
 	
 	drawTransportInformation();
@@ -214,7 +226,24 @@ void TransportManager::moveTransport()
 		_leftBase = true;
 		// This runs when we are full of troops
 		//followPerimeter(_to, _from);
-		followPerimeter(_returning);
+		if (_returning)
+		{
+			if (_transportShip->getSpaceRemaining() > 5){
+
+				return;
+			}
+			else
+			{
+				BWAPI::Broodwar->printf("Returning is true");
+				followPerimeter(-1);
+				//BWTA::BaseLocation * myBaseLocation = InformationManager::Instance().getMainBaseLocation(BWAPI::Broodwar->self());
+				//goTo = myBaseLocation->getPosition();
+			}
+		}
+		else
+		{
+			followPerimeter(1);
+		}
 	}
 }
 
@@ -226,6 +255,9 @@ void TransportManager::moveTroops()
 	{
 		return;
 	}
+
+
+
 	//unload zealots and reavers if close enough or dying
 	int transportHP = _transportShip->getHitPoints() + _transportShip->getShields();
 	
@@ -235,7 +267,8 @@ void TransportManager::moveTroops()
 	int radiusOfShuttle = weaponRange; // this can be changed to determine the radius at which we find our enemy units
 
 	// why use radiusOfShuttle here??? we don't need to. We can totally search the all the enemy units if we want?
-	BWAPI::Unit target = assignTargetsOld(_transportShip->getUnitsInRadius(radiusOfShuttle * 3, BWAPI::Filter::IsEnemy));
+	BWAPI::Unitset unitsInRange = _transportShip->getUnitsInRadius(radiusOfShuttle * 3, BWAPI::Filter::IsEnemy);
+	BWAPI::Unit target = assignTargetsOld(unitsInRange);
 	
 	/* 
 	look for target withing reaver(scarab?) attack range
@@ -270,23 +303,25 @@ void TransportManager::moveTroops()
 		if (!_returning) 
 		{
 			_transportShip->unloadAll(_transportShip->getPosition());
-		} 
+		}
+		/*else
+		{
+			
+			
+
+		}*/
 
 	}
 	
 }
 
 // ... how does this even work? what if i want it to go back to my base????
-void TransportManager::followPerimeter(bool returning, int clockwise)
+void TransportManager::followPerimeter(int clockwise)
 {
 	BWAPI::Position goTo = getFleePosition(clockwise);
-	// the if statement below does not work
-	if (returning)
-	{
-		//BWAPI::Broodwar->printf("Returning is true");
-		BWTA::BaseLocation * myBaseLocation = InformationManager::Instance().getMainBaseLocation(BWAPI::Broodwar->self());
-		goTo = myBaseLocation->getPosition();
-	}
+	
+	// theres probably extra conditional checks done here that we don't need
+	// we want to return and we have not up the shuttle
 
 	if (Config::Debug::DrawUnitTargetInfo)
 	{
@@ -485,11 +520,13 @@ BWAPI::Position TransportManager::getFleePosition(int clockwise)
 		// keep going to the next vertex in the perimeter until we get to one we're far enough from to issue another move command
 		while (distanceFromCurrentVertex < 128*2)
 		{
-			_currentRegionVertexIndex = (_currentRegionVertexIndex + clockwise*1) % _mapEdgeVertices.size();
+			// change made here
+			_currentRegionVertexIndex = (_currentRegionVertexIndex + clockwise*1 ) % _mapEdgeVertices.size();
 
 			distanceFromCurrentVertex = _mapEdgeVertices[_currentRegionVertexIndex].getDistance(_transportShip->getPosition());
 		}
-
+		
+		BWAPI::Broodwar->printf("_returning %d Index %d", _returning, _currentRegionVertexIndex);
 		return _mapEdgeVertices[_currentRegionVertexIndex];
 	}
 
@@ -642,4 +679,41 @@ int TransportManager::getAttackPriority(BWAPI::Unit reaverUnit, BWAPI::Unit targ
 	{
 		return 1;
 	}
+}
+
+
+bool TransportManager::scarabShot(BWAPI::Unit shuttle)
+{
+	// don't use it because i move the shuttle to the reaver
+	//int detectionRadius = shuttle->getDistance(reaver);
+	for (auto & unit : shuttle->getUnitsInRadius(BWAPI::WeaponTypes::Scarab.maxRange(), BWAPI::Filter::IsAlly))
+	{
+		if (unit->getType() == BWAPI::UnitTypes::Protoss_Scarab)
+		{
+			// a scarab was shots
+			return true;
+		}
+	}
+
+	return false;
+
+}
+
+bool TransportManager::isSafe(BWAPI::Unit reaver)
+{
+	// 128 is the scarabs weapon range, need to play around with then numbers
+	BWAPI::Unitset enemies = reaver->getUnitsInRadius(128 * 2, BWAPI::Filter::IsEnemy);
+
+	for (auto & enemy : enemies)
+	{
+		// check if reaver can immediatley be attacked by enemy
+		if (enemy->isInWeaponRange(reaver))
+		{
+			return false;
+		}
+
+	}
+
+	return true;
+
 }

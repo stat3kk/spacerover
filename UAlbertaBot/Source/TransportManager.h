@@ -25,8 +25,8 @@ class TransportManager : public MicroManager
 	void							drawTransportInformation(int x, int y);
 	void							moveTransport();
 	void							moveTroops();
-	BWAPI::Position                 getFleePosition(int clockwise=1);
-	void                            followPerimeter(bool returning, int clockwise = 1);
+	BWAPI::Position                 getFleePosition(int clockwise = 1);
+	void                            followPerimeter(int clockwise = 1);
 	void							followPerimeter(BWAPI::Position to, BWAPI::Position from);
 	int                             getClosestVertexIndex(BWAPI::UnitInterface * unit);
 	int								getClosestVertexIndex(BWAPI::Position p);
@@ -51,6 +51,8 @@ public:
 	BWAPI::Unit						assignTargetsOld(const BWAPI::Unitset & targets);
 	BWAPI::Unit						getTarget(BWAPI::Unit rangedUnit, const BWAPI::Unitset & targets);
 	int								getAttackPriority(BWAPI::Unit rangedUnit, BWAPI::Unit target);
+	bool							scarabShot(BWAPI::Unit shuttle);
+	bool							isSafe(BWAPI::Unit reaver);
 
 };
 }

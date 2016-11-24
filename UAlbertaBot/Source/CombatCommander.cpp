@@ -236,6 +236,19 @@ void CombatCommander::updateReaverDropSquads()
 				{
 					unit->train(BWAPI::UnitTypes::Protoss_Scarab);
 				}
+
+				// _BRANDON_
+				// to move zealots to reaver for now
+				for (auto & unitZealot : dropUnits) {
+					/* _BRANDON_ you know how you said you were going to have the zealots do something? 
+					// this code below moves the zealots to the reaver if the reaver exists
+					// might want to add another conditional if we wanted the zealots to defend? or would it matter?
+					// since i assume you will just put the zealot into the defense squad instead?
+					*/
+					if (unitZealot->getType() == BWAPI::UnitTypes::Protoss_Zealot) {
+						unitZealot->move(unit->getPosition());
+					}
+				}
 			}
 			
 			dropSquadHasReaver = true;
@@ -247,6 +260,8 @@ void CombatCommander::updateReaverDropSquads()
 		}
 		else if (unit->getType() == BWAPI::UnitTypes::Protoss_Zealot)
 		{
+			
+			
 			// 2 zealots per shuttle
 			zealotSpotsRemaining -= 1;
 		}
@@ -303,13 +318,28 @@ void CombatCommander::updateReaverDropSquads()
 				// find the shuttle
 				if (unitFlying->isFlying())
 				{
-					// load the rest of the squad in (if not already inside)
+					// drops off what is loaded first
+					// but when dropping off, the shuttle still moves foward a bit so
+					// the drops are a bit spaced out with the first units dropped being behind the last unit dropped
+
+					// load zealots
 					for (auto & unit : dropUnits)
 					{
 						// don't load the shuttle itself? can it even do that?
-						if (!unit->isFlying())
+						if (unit->getType() == BWAPI::UnitTypes::Protoss_Zealot)
 						{
 							unitFlying->load(unit);
+						}
+					}
+
+					// load reaver
+					for (auto & unit : dropUnits)
+					{
+						// don't load the shuttle itself? can it even do that?
+						if (unit->getType() == BWAPI::UnitTypes::Protoss_Reaver)
+						{
+							unitFlying->load(unit);
+							break;
 						}
 					}
 
@@ -318,6 +348,7 @@ void CombatCommander::updateReaverDropSquads()
 			}
 			//return;
 		}
+		
 		else // we have left base
 		{
 			// look for reavers
@@ -335,9 +366,13 @@ void CombatCommander::updateReaverDropSquads()
 					{
 						// the shuttle
 						if (unitFlying->isFlying())
-						{
-							// if we ran out of scarabs
-							if (unit->getScarabCount() == 0) {
+						{ 
+
+							// if we ran out of scarabs 
+							// unit->isAttacking() doesn't ever seem to evaluate to true
+							// unit->isAttackFrame() doesn't either
+							if ((unit->getScarabCount() == 0) || dropSquad._transportManager.scarabShot(unit)) {
+								BWAPI::Broodwar->printf("PICKUP");
 								unitFlying->load(unit);
 								// yea this below part ... idk how follow perimeter works
 								dropSquad._transportManager._returning = true;
@@ -361,6 +396,7 @@ void CombatCommander::updateReaverDropSquads()
 				}
 			}
 		}
+		
 		
 
 		// hmmm TransportManager handles this for the shuttle, not sure about the other units
