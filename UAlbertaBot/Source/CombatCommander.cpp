@@ -212,7 +212,6 @@ void CombatCommander::updateReaverDropSquads()
 	// figure out how many units the drop squad needs
 	bool dropSquadHasTransport = false;
 	bool dropSquadHasReaver = false;
-	//int transportSpotsRemaining = 8;
 	int zealotSpotsRemaining = 2;
 	auto & dropUnits = dropSquad.getUnits(); 
 
@@ -245,6 +244,7 @@ void CombatCommander::updateReaverDropSquads()
 					// might want to add another conditional if we wanted the zealots to defend? or would it matter?
 					// since i assume you will just put the zealot into the defense squad instead?
 					*/
+
 					if (unitZealot->getType() == BWAPI::UnitTypes::Protoss_Zealot) {
 						unitZealot->move(unit->getPosition());
 					}
@@ -306,7 +306,20 @@ void CombatCommander::updateReaverDropSquads()
 	// drop squad is ready to roll (or already rolling out)
 	else
 	{
-		// do we even use this????
+		// they all died
+		/*
+		if (dropUnits.size() == 0 && dropSquad._transportManager._leftBase) {
+			dropSquadHasTransport = false;
+			dropSquadHasReaver = false;
+			zealotSpotsRemaining = 2;
+			dropSquad._transportManager._leftBase = false;
+			dropSquad._transportManager._returning = false;
+			dropSquad._transportManager._transportShip = NULL;
+
+		}
+		*/
+
+		// BRANDON'S do not delete
 		_dropReady = true;
 		// load em up
 
@@ -314,36 +327,25 @@ void CombatCommander::updateReaverDropSquads()
 		/*if we have not left the base yet*/ 
 		if (! dropSquad._transportManager._leftBase)
 		{
-			for (auto & unitFlying : dropUnits)
+
+			// because order of loading units matter
+
+			// load zealots
+			for (auto & unit : dropUnits)
 			{
-				// find the shuttle IMPORTANT call the shuttle itself instead
-				if (unitFlying->isFlying())
+				// unit is zealot
+				if (unit->getType() == BWAPI::UnitTypes::Protoss_Zealot)
 				{
-					// drops off what is loaded first
-					// but when dropping off, the shuttle still moves foward a bit so
-					// the drops are a bit spaced out with the first units dropped being behind the last unit dropped
-
-					// load zealots
-					for (auto & unit : dropUnits)
-					{
-						// unit is zealot
-						if (unit->getType() == BWAPI::UnitTypes::Protoss_Zealot)
-						{
-							unitFlying->load(unit);
-						}
-					}
-
-					// load reaver
-					for (auto & unit : dropUnits)
-					{
-						// unit is reaver
-						if (unit->getType() == BWAPI::UnitTypes::Protoss_Reaver)
-						{
-							unitFlying->load(unit);
-							break;
-						}
-					}
-
+					dropSquad._transportManager._transportShip->load(unit);
+				}
+			}
+			// load reaver
+			for (auto & unit : dropUnits)
+			{
+				// unit is reaver
+				if (unit->getType() == BWAPI::UnitTypes::Protoss_Reaver)
+				{
+					dropSquad._transportManager._transportShip->load(unit);
 					break;
 				}
 			}
@@ -355,12 +357,10 @@ void CombatCommander::updateReaverDropSquads()
 			// look for reavers
 			for (auto & unit : dropUnits)
 			{
-				
 				// found the reaver
 				if ((unit->getType() == BWAPI::UnitTypes::Protoss_Reaver) )
 				{	// so we pick up the reaver and fly back to base
-
-					// might want to make this into a stand alone function
+					
 					// reload scarabs when needed
 					if (unit->getScarabCount() < 3)
 					{
@@ -370,61 +370,31 @@ void CombatCommander::updateReaverDropSquads()
 						}
 					}
 
-					// look for the shuttle IMPORTANT we can just call the shuttle directly?
-					for (auto & unitFlying : dropUnits)
-					{
-						// the shuttle
-						if (unitFlying->isFlying())
-						{ 
-
-							
-							//BWAPI::Broodwar->printf("Is the reaver safe? %d", dropSquad._transportManager.isSafe(unit));
-							// we might want to deal with the case when the reaver runs out of scarabs
+					
+					
+					//BWAPI::Broodwar->printf("Is the reaver safe? %d", dropSquad._transportManager.isSafe(unit));
+					// we might want to deal with the case when the reaver runs out of scarabs
 							
 
-							/*
-							Checks if the reaver is in range of being attacked
-							if it is not safe, then have the shuttle pick it up to retreat
-							IMPORTANT WHAT IF IT DIDNT SHOOT A SCARAB?
-							*/
-							if (/* (unit->getScarabCount() == 0) || */ 
-								(!dropSquad._transportManager.isSafe(unit) && dropSquad._transportManager.scarabShot(unit))
-								) 
-							{
-								
-								unitFlying->load(unit);
-								// yea this below part ... idk how follow perimeter works
-								dropSquad._transportManager._returning = true;
-							}
-							/* unload all our units */
-							else if (unitFlying->getSpaceRemaining() == 8)
-							{
-								// move the shuttle to the reaver position if we did not pick it up yet
-								// the getDistance > 5 is a work around for a bug where the shuttle will keep
-								// trying to move towards the reaver? and will be stuck on that command instead
-								// of picking up the reaver.
-								if (unitFlying->getDistance(unit) > 5) {
-									dropSquad._transportManager._nearReaver = false;
-								}
-								else
-								{
-									dropSquad._transportManager._nearReaver = true;
-								}
-								
-								// do we want to move the shuttle to the reaver in this file instead of
-								// transport manager?
-
-
-							}
-							/* if the reaver is safe, go and attack the enemy */
-							else if ((unitFlying->getSpaceRemaining() == 4 ) && dropSquad._transportManager.isSafe(unit))
-							{
-								dropSquad._transportManager._returning = false;
-							}
-							break;
-						}
+					/*
+					  no enemies in range && we aren't returning
+					  || ( we are not safe && (shot a scarab || no scarabs left) )
+					*/
+					if (
+						  ( (dropSquad._transportManager.isSafe(unit) == 2) && (!dropSquad._transportManager._returning) )
+						  || (!dropSquad._transportManager.isSafe(unit) && 
+						     (dropSquad._transportManager.scarabShot(unit) || (unit->getScarabCount() == 0))
+						  ) 
+					   ) 
+					{		
+						dropSquad._transportManager._transportShip->load(unit);
+						dropSquad._transportManager._returning = true;
 					}
-			
+					/* if the reaver is safe, go and attack the enemy */
+					else if ((dropSquad._transportManager._transportShip->getSpaceRemaining() == 4) && dropSquad._transportManager.isSafe(unit))
+					{
+						dropSquad._transportManager._returning = false;
+					}
 
 				}
 			}

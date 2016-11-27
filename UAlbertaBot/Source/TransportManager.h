@@ -11,7 +11,7 @@ class MicroManager;
 class TransportManager : public MicroManager
 {
 	std::vector<BWAPI::Position>    _mapEdgeVertices; 
-	BWAPI::UnitInterface*	        _transportShip;
+	
 	int                             _currentRegionVertexIndex;
 	BWAPI::Position					_minCorner;
 	BWAPI::Position					_maxCorner;
@@ -36,40 +36,29 @@ public:
 
 	TransportManager();
 
-	bool _leftBase;
-	bool _returning;
-	bool _nearReaver;
+	bool							_leftBase;
+	bool							_returning;
+	BWAPI::UnitInterface*	        _transportShip;
 
 	void							executeMicro(const BWAPI::Unitset & targets);
 	void							update();
 	void							setTransportShip(BWAPI::UnitInterface * unit);
 	void							setFrom(BWAPI::Position from);
 	void							setTo(BWAPI::Position to);
-	// similar to ranged manager, but this time we want to return a target.?
+
+	// similar to ranged manager, but this time we want to return a target
 	// changes are made here
 	BWAPI::Unit						assignTargetsOld(const BWAPI::Unitset & targets);
 	BWAPI::Unit						getTarget(BWAPI::Unit rangedUnit, const BWAPI::Unitset & targets);
 	int								getAttackPriority(BWAPI::Unit rangedUnit, BWAPI::Unit target);
-	// a bit different 
 	// checks if scarab was shot
 	bool							scarabShot(BWAPI::Unit shuttle);
-	// check if reaver is safe from enemy attacks
-	bool							isSafe(BWAPI::Unit reaver);
+	
+	/*
+	checks if the reaver is safe from enemy attacks
+	0 -> unsafe			1 -> safe and we can hit the enemy		2 -> safe but there are no enemies for us to hit
+	*/
+	int								isSafe(BWAPI::Unit reaver);
 
 };
 }
-
-/*
-class DropState
-{
-public:
-
-	DropState();
-
-	bool _leftBase;
-	bool _hasDropped;
-	bool _orientation;
-
-};
-*/
-//extern DropState dropState0;

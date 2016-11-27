@@ -71,7 +71,7 @@ const bool StrategyManager::shouldExpandNow() const
     }
 
     // we will make expansion N after array[N] minutes have passed
-    std::vector<int> expansionTimes = {5, 10, 20, 30, 40 , 50};
+    std::vector<int> expansionTimes = {12, 20, 30, 40 , 50};
 
     for (size_t i(0); i < expansionTimes.size(); ++i)
     {
@@ -168,10 +168,13 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 			//??????? 2 - numShuttle was the thing before ?????????????
 			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Shuttle, numShuttle + 1));
 		}
+		else if (BWAPI::Broodwar->self()->gas() > 200)
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 1));
+		}
 		else
 		{
-			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 4));
-			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 1));
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 1));
 		}
 		// make sure shuttles are out first. How about no??? Whats the point of having a shuttle with no
 		// attacking units?.

@@ -3,15 +3,7 @@
 
 using namespace UAlbertaBot;
 
-/*
-DropState::DropState() :
-	_leftBase(false)
-	, _hasDropped(false)
-	, _orientation(1)
-{
 
-}
-*/
 TransportManager::TransportManager() :
 	_transportShip(NULL)
 	, _currentRegionVertexIndex(-1)
@@ -21,7 +13,6 @@ TransportManager::TransportManager() :
 	, _from(-1,-1)
 	, _leftBase(false)
 	, _returning(false)
-	, _nearReaver(false)
 {
 	
 	
@@ -182,69 +173,80 @@ void TransportManager::moveTransport()
 	}
 
 	// If I didn't finish unloading the troops, wait
+	/* 
+	  (currentCommad = Unload) && (there are units on the shuttle) && (we can unload here)
+	*/
 	BWAPI::UnitCommand currentCommand(_transportShip->getLastCommand());
-	if ((currentCommand.getType() == BWAPI::UnitCommandTypes::Unload_All 
-		 || currentCommand.getType() == BWAPI::UnitCommandTypes::Unload_All_Position)
-		&& _transportShip->getLoadedUnits().size() > 0)
+	if ( 
+		(currentCommand.getType() == BWAPI::UnitCommandTypes::Unload_All || currentCommand.getType() == BWAPI::UnitCommandTypes::Unload_All_Position)
+		&& ( _transportShip->getLoadedUnits().size() > 0 )
+		&& _transportShip->canUnloadAtPosition(_transportShip->getPosition()) 
+		)
 	{
-		return;
-	}
-	
-	// we are finished unloading troops and now we want to head back
-
-	// never true...
-	if (_to.isValid() && _from.isValid())
-	{
-		// I don't know what this does ... but it doesn't run
-		followPerimeter(_to, _from);
-	}
-	else
-	{
-		// we have left the base
-		_leftBase = true;
-
 		/*
-			PROBLEM HERE
-			SHUTTLE TRIES TO GO FOWARD FOR A BIT BEFORE RETURNING
-			IS THIS REALLY A PROBLEM WORTH MY TIME??? idk man....
+		BWAPI::Broodwar->printf("Can unload here? %d", _transportShip->canUnloadAtPosition(_transportShip->getPosition()));
+		BWAPI::Broodwar->printf("%d--%d--%d", (currentCommand.getType() == BWAPI::UnitCommandTypes::Unload_All)
+			, (currentCommand.getType() == BWAPI::UnitCommandTypes::Unload_All_Position)
+			, (_transportShip->getLoadedUnits().size() > 0) 
+			);
 		*/
 
+		// if we are safe and enemies are in range of our attacks so we wait until we finish unloading (isSafe == 1)
+		// for zealots, the (isSafe == 0) condition might occur as we base isSafe off the transportShip
+		if (isSafe(_transportShip) < 2) {
+			return;
+		}
+		// otherwise we keep going moving the shuttle
+	}
+	
+	// we have left the base
+	_leftBase = true;
+
 		/*we want to retreat*/ 
-		if (_returning)
+	if (_returning)
+	{
+		// ditch the zealots
+		for (auto & unit : _transportShip->getLoadedUnits()) 
 		{
-			/*make sure we have picked up the reaver*/ 
-			if (_transportShip->getSpaceRemaining() > 5){
-				return;
-			}
-			else
+			if (unit->getType() == BWAPI::UnitTypes::Protoss_Zealot) 
 			{
-				// retreat
-				followPerimeter(-1);
+				_transportShip->unload(unit);
 			}
 		}
-		/*not retreating*/
-		else 
+		/*make sure we have picked up the reaver*/ 
+		if (_transportShip->getSpaceRemaining() > 5)
 		{
-			// go towards enemy base
-			if (_transportShip->getSpaceRemaining() < 5)
-			{
-				followPerimeter(1);
-			}
-			else
-			{
-				// might want to move this back to combat commander?
-				// moves the shuttle to the reaver if we are currently using the reaver to attack
-				for (auto & reaver : _transportShip->getUnitsInRadius(BWAPI::WeaponTypes::Scarab.maxRange() * 4, BWAPI::Filter::IsAlly))
-				{
-					if (reaver->getType() == BWAPI::UnitTypes::Protoss_Reaver)
-					{
-						_transportShip->move(reaver->getPosition());
-					}
-				}
-			}
-
+			return;
+		}
+		else
+		{
+			// retreat
+			followPerimeter(-1);
 		}
 	}
+	/*not retreating*/
+	else 
+	{
+		// go towards enemy base
+		if (_transportShip->getSpaceRemaining() < 5)
+		{
+			followPerimeter(1);
+		}
+		else
+		{
+			// might want to move this back to combat commander?
+			// moves the shuttle to the reaver if we are currently using the reaver to attack
+			for (auto & reaver : _transportShip->getUnitsInRadius(BWAPI::WeaponTypes::Scarab.maxRange() * 4, BWAPI::Filter::IsAlly))
+			{
+				if (reaver->getType() == BWAPI::UnitTypes::Protoss_Reaver)
+				{
+					_transportShip->move(reaver->getPosition());
+				}
+			}
+		}
+
+	}
+	
 }
 
 
@@ -258,6 +260,7 @@ void TransportManager::moveTroops()
 	//unload zealots and reavers if close enough or dying
 	int transportHP = _transportShip->getHitPoints() + _transportShip->getShields();
 	
+	// this should not be needed PLS REMOVE
 	BWTA::BaseLocation * enemyBaseLocation = InformationManager::Instance().getMainBaseLocation(BWAPI::Broodwar->enemy());
 
 	int weaponRange = BWAPI::WeaponTypes::Scarab.maxRange();
@@ -267,22 +270,17 @@ void TransportManager::moveTroops()
 	BWAPI::Unitset unitsInRange = _transportShip->getUnitsInRadius(radiusOfShuttle * 3, BWAPI::Filter::IsEnemy);
 	BWAPI::Unit target = assignTargetsOld(unitsInRange);
 	
-	/* 
-	look for target withing reaver(scarab?) attack range
-	then UAlbertaBot's default conditional checks
+	/*
+	  checks if target is within weapon range of reaver (might want to add a buffer)
+	  or if we are low on hp.
+	  original UAlbertaBot code conflicts due to its EnemyBaseLocation < 300 and our isSafe == 2 (combat commander)
 	*/
 	if 
 		(
-		// checks if target is within weapon range of reaver (might want to add a buffer)
-		( (target != NULL) && (_transportShip->getDistance(target) < weaponRange) ) ||
-		// things already in UalbertaBot transportManager
-		(enemyBaseLocation && (_transportShip->getDistance(enemyBaseLocation->getPosition()) < 300 || transportHP < 100)
-		&& _transportShip->canUnloadAtPosition(_transportShip->getPosition()))
-		
+		  ( (target != NULL) && (_transportShip->getDistance(target) < weaponRange) ) ||
+		  ( (transportHP < 100) && _transportShip->canUnloadAtPosition(_transportShip->getPosition()) )
 		)
 	{
-		//unload troops 
-		//and return? 
 
 		// get the unit's current command
 		BWAPI::UnitCommand currentCommand(_transportShip->getLastCommand());
@@ -296,7 +294,10 @@ void TransportManager::moveTroops()
 		// attacking enemy base
 		if (!_returning && _transportShip->getSpaceRemaining() < 5) 
 		{
-			_transportShip->unloadAll(_transportShip->getPosition());
+			_transportShip->unloadAll();
+			// dude your operator overload is the same as using no parameters.
+			// i spent like a whole hour figuring this was causing a bug...
+			//_transportShip->unloadAll(_transportShip->getPosition());
 		}
 	
 	}
@@ -514,7 +515,6 @@ BWAPI::Position TransportManager::getFleePosition(int clockwise)
 			distanceFromCurrentVertex = _mapEdgeVertices[_currentRegionVertexIndex].getDistance(_transportShip->getPosition());
 		}
 		
-		//BWAPI::Broodwar->printf("_returning %d Index %d", _returning, _currentRegionVertexIndex);
 		return _mapEdgeVertices[_currentRegionVertexIndex];
 	}
 
@@ -687,11 +687,32 @@ bool TransportManager::scarabShot(BWAPI::Unit shuttle)
 
 }
 
-/*checks if the reaver is safe from enemy attacks*/
-bool TransportManager::isSafe(BWAPI::Unit reaver)
+
+
+/*
+  checks if the reaver is safe from enemy attacks
+  return values:
+  0 -> unsafe
+  1 -> safe and we can hit the enemy
+  2 -> safe but there are no enemies for us to hit
+*/
+int TransportManager::isSafe(BWAPI::Unit reaver)
 {
 	// 128 is the scarabs weapon range, need to play around with then numbers
-	BWAPI::Unitset enemies = reaver->getUnitsInRadius(BWAPI::WeaponTypes::Scarab.maxRange() * 2, BWAPI::Filter::IsEnemy);
+	BWAPI::Unitset enemies, targets; 
+
+	targets = reaver->getUnitsInRadius(BWAPI::WeaponTypes::Scarab.maxRange(), BWAPI::Filter::IsEnemy);
+	// check scarabs here or nah?
+	// not loaded reaver yet
+	// nothing within range and we aren't retreating atm, return false as that will make the shuttle pick it up again
+	if ((targets.size() == 0) && _transportShip->getSpaceRemaining() > 5) {
+		return 2;
+	}
+	else
+	{
+		enemies = reaver->getUnitsInRadius(BWAPI::WeaponTypes::Scarab.maxRange() * 2, BWAPI::Filter::IsEnemy);
+
+	}
 
 	for (auto & enemy : enemies)
 	{
