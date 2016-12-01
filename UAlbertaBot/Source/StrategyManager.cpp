@@ -189,8 +189,9 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 	}
 
     // set up cannons to save self
+	BWAPI::Broodwar->printf("checking");
     if (InformationManager::Instance().enemyIsRushing()) {
-
+		BWAPI::Broodwar->printf("pushing cannon");
         // need to check to see if we have the building to make photon cannons
         //if (BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Forge)) {
            goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Photon_Cannon, 1));
