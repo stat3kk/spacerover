@@ -46,6 +46,9 @@ public:
 	void							setFrom(BWAPI::Position from);
 	void							setTo(BWAPI::Position to);
 
+	void							clearAll();
+
+
 	// similar to ranged manager, but this time we want to return a target
 	// changes are made here
 	BWAPI::Unit						assignTargetsOld(const BWAPI::Unitset & targets);

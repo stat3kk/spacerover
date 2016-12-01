@@ -14,9 +14,16 @@ TransportManager::TransportManager() :
 	, _leftBase(false)
 	, _returning(false)
 {
-	
-	
-
+}
+void TransportManager::clearAll() {
+	_transportShip = NULL;
+	_currentRegionVertexIndex = -1;
+	_minCorner = BWAPI::Position(-1,-1);
+	_maxCorner = BWAPI::Position(-1,-1);
+	_to = BWAPI::Position(-1, -1);
+	_from = BWAPI::Position(-1, -1);
+	_leftBase = false;
+	_returning = false;
 }
 
 void TransportManager::executeMicro(const BWAPI::Unitset & targets) 
@@ -128,8 +135,6 @@ void TransportManager::update()
 {
     
 	const BWAPI::Unitset & dropUnits = getUnits();
-	int transportSpotsRemaining = 8;
-	int unitSpace = 0;
 	
 	// size is either 0 or 1 ... not going to touch this
 	if (!_transportShip && getUnits().size() > 0)
@@ -183,13 +188,13 @@ void TransportManager::moveTransport()
 		&& _transportShip->canUnloadAtPosition(_transportShip->getPosition()) 
 		)
 	{
-		/*
+		
 		BWAPI::Broodwar->printf("Can unload here? %d", _transportShip->canUnloadAtPosition(_transportShip->getPosition()));
 		BWAPI::Broodwar->printf("%d--%d--%d", (currentCommand.getType() == BWAPI::UnitCommandTypes::Unload_All)
 			, (currentCommand.getType() == BWAPI::UnitCommandTypes::Unload_All_Position)
 			, (_transportShip->getLoadedUnits().size() > 0) 
 			);
-		*/
+		 
 
 		// if we are safe and enemies are in range of our attacks so we wait until we finish unloading (isSafe == 1)
 		// for zealots, the (isSafe == 0) condition might occur as we base isSafe off the transportShip

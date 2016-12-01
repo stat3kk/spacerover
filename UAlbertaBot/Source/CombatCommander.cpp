@@ -12,6 +12,8 @@ const size_t BaseDefensePriority = 2;
 const size_t ScoutDefensePriority = 3;
 const size_t DropPriority = 4;
 
+int whichSquad = 0;
+
 CombatCommander::CombatCommander() 
     : _initialized(false)
 {
@@ -45,6 +47,7 @@ void CombatCommander::initializeSquads()
 	{
 		SquadOrder reaverDrop(SquadOrderTypes::Drop, ourBasePosition, 900, "Wait for transport");
 		_squadData.addSquad("ReaverDrop", Squad("ReaverDrop", reaverDrop, DropPriority));
+		
 	}
 
 	
@@ -202,18 +205,22 @@ void CombatCommander::updateDropSquads()
 // our pride and joy
 void CombatCommander::updateReaverDropSquads()
 {
+
 	if (Config::Strategy::StrategyName != "Protoss_ReaverDrop")
 	{
 		return;
 	}
-
 	Squad & dropSquad = _squadData.getSquad("ReaverDrop");
+	
 
 	// figure out how many units the drop squad needs
 	bool dropSquadHasTransport = false;
 	bool dropSquadHasReaver = false;
 	int zealotSpotsRemaining = 2;
 	auto & dropUnits = dropSquad.getUnits(); 
+
+	BWAPI::Broodwar->printf("What squad? %d", whichSquad);
+	
 
 	// is the existing squad ready to go?
 	for (auto & unit : dropUnits)
@@ -227,6 +234,7 @@ void CombatCommander::updateReaverDropSquads()
 		// every drop squad also needs a reaver
 		else if (unit->getType() == BWAPI::UnitTypes::Protoss_Reaver)
 		{
+			
 			// we have to train the scarabs here? ... apparently ... after the last push on git
 			// the scarabs wouldn't train anymore using the ualberta bot function wtf
 			if (!dropSquad._transportManager._leftBase) 
@@ -265,6 +273,17 @@ void CombatCommander::updateReaverDropSquads()
 			// 2 zealots per shuttle
 			zealotSpotsRemaining -= 1;
 		}
+	}
+
+	// they all died so set up a new rever drop squad
+	if (!dropSquadHasReaver && dropSquad._transportManager._leftBase) {
+		dropSquad.clear();
+		dropSquadHasTransport = false;
+		dropSquadHasReaver = false;
+		zealotSpotsRemaining = 2;
+		dropSquad._transportManager.clearAll();
+
+		return;
 	}
 
 	// if there are still units to be added to the drop squad, do it
@@ -306,18 +325,8 @@ void CombatCommander::updateReaverDropSquads()
 	// drop squad is ready to roll (or already rolling out)
 	else
 	{
-		// they all died
-		/*
-		if (dropUnits.size() == 0 && dropSquad._transportManager._leftBase) {
-			dropSquadHasTransport = false;
-			dropSquadHasReaver = false;
-			zealotSpotsRemaining = 2;
-			dropSquad._transportManager._leftBase = false;
-			dropSquad._transportManager._returning = false;
-			dropSquad._transportManager._transportShip = NULL;
-
-		}
-		*/
+		
+		
 
 		// BRANDON'S do not delete
 		_dropReady = true;
