@@ -156,7 +156,7 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 	// added strategy here
 	else if (Config::Strategy::StrategyName == "Protoss_ReaverDrop")
 	{
-
+		BWAPI::Broodwar->printf("reaver dropping");
 		// start with 1 of each so i can test the reaver drop 
 		if (numReaver < 1)
 		{
