@@ -182,6 +182,15 @@ void ProductionManager::manageBuildOrderQueue()
 			// and remove it from the _queue
 			_queue.removeCurrentHighestPriorityItem();
 
+			// if we started building a reaver, get a shuttle into the queue asap
+			if (Config::Strategy::StrategyName == "Protoss_ReaverDrop")
+			{
+				if (currentItem.metaType.getUnitType() == BWAPI::UnitTypes::Protoss_Reaver)
+				{
+					_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Shuttle), true);
+				}
+			}
+
 			// don't actually loop around in here
 			break;
 		}

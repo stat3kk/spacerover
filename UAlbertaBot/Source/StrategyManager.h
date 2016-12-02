@@ -55,6 +55,7 @@ class StrategyManager
 	const	double				    getUCBValue(const size_t & strategy) const;
 	const	bool				    shouldExpandNow() const;
     const	MetaPairVector		    getProtossBuildOrderGoal() const;
+	const	int						getRemainingReaverBuildTime() const;
 	const	MetaPairVector		    getTerranBuildOrderGoal() const;
 	const	MetaPairVector		    getZergBuildOrderGoal() const;
 
