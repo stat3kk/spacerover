@@ -71,7 +71,7 @@ const bool StrategyManager::shouldExpandNow() const
     }
 
     // we will make expansion N after array[N] minutes have passed
-    std::vector<int> expansionTimes = {5, 10, 20, 30, 40 , 50};
+    std::vector<int> expansionTimes = {12, 20, 30, 40 , 50};
 
     for (size_t i(0); i < expansionTimes.size(); ++i)
     {
@@ -125,6 +125,7 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
     int numScout            = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Corsair);
     int numReaver           = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Reaver);
     int numDarkTeplar       = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Dark_Templar);
+	int numShuttle	        = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Shuttle);
 
     if (Config::Strategy::StrategyName == "Protoss_ZealotRush")
     {
@@ -152,6 +153,49 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
             goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 8));
         }
     }
+	// added strategy here
+	else if (Config::Strategy::StrategyName == "Protoss_ReaverDrop")
+	{
+
+		// start with 1 of each so i can test the reaver drop 
+		if (numReaver < 1)
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 2));
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Reaver, numReaver + 1));
+		}
+
+		// test handling shuttles in productionmanager
+		/*
+		if ((numShuttle < 1) && (numReaver < 1) && (getRemainingReaverBuildTime() <= 900))
+		{
+		//??????? 2 - numShuttle was the thing before ?????????????
+		goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Shuttle, numShuttle + 1));
+		}
+		*/
+
+		// mass dragoons if we're doing well
+		else if (BWAPI::Broodwar->self()->gas() > 200)
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 1));
+		}
+		else
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 1));
+		}
+		// make sure shuttles are out first. How about no??? Whats the point of having a shuttle with no
+		// attacking units?.
+		
+		// warped in from gateways so shouldn't interfere with dropship production
+		// It does interfere? Depends on our resources as well doesn't it?	
+		//goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 4));
+		//goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 1));
+
+		// get that upgrade for dragoons
+		if (numDragoons > 0)
+		{
+			goal.push_back(std::pair<MetaType, int>(BWAPI::UpgradeTypes::Singularity_Charge, 1));
+		}
+	}
     else if (Config::Strategy::StrategyName == "Protoss_DTRush")
     {
         goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dark_Templar, numDarkTeplar + 2));
@@ -207,6 +251,22 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 
 	return goal;
 }
+
+/*
+const int StrategyManager::getRemainingReaverBuildTime() const
+{
+	for (const auto & unit : BWAPI::Broodwar->self()->getUnits())
+	{
+		// search for reavers being built and return the time remaining
+		if (unit->getType() == BWAPI::UnitTypes::Protoss_Reaver)
+		{
+			return unit->getRemainingBuildTime();
+		}
+	}
+	// no reavers are being built
+	return -1;
+}
+*/
 
 const MetaPairVector StrategyManager::getTerranBuildOrderGoal() const
 {

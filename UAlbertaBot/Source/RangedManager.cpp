@@ -23,8 +23,9 @@ void RangedManager::assignTargetsOld(const BWAPI::Unitset & targets)
 
     for (auto & rangedUnit : rangedUnits)
 	{
+
 		// train sub units such as scarabs or interceptors
-		//trainSubUnits(rangedUnit);
+		trainSubUnits(rangedUnit);
 
 		// if the order is to attack or defend
 		if (order.getType() == SquadOrderTypes::Attack || order.getType() == SquadOrderTypes::Defend) 
@@ -96,6 +97,7 @@ std::pair<BWAPI::Unit, BWAPI::Unit> RangedManager::findClosestUnitPair(const BWA
 // get a target for the zealot to attack
 BWAPI::Unit RangedManager::getTarget(BWAPI::Unit rangedUnit, const BWAPI::Unitset & targets)
 {
+
 	int bestPriorityDistance = 1000000;
     int bestPriority = 0;
     
@@ -120,6 +122,47 @@ BWAPI::Unit RangedManager::getTarget(BWAPI::Unit rangedUnit, const BWAPI::Unitse
 		}       
     }
 
+	if (rangedUnit->getType() == BWAPI::UnitTypes::Protoss_Scarab) {
+		
+		BWAPI::Unitset splashTargets = closestTarget->getUnitsInRadius(60, BWAPI::Filter::IsEnemy);
+
+		int maxDamage = 0;
+		// enemies within range of the radius of scarab explosion
+		for (auto & scarabTarget : splashTargets)
+		{
+			BWAPI::Unitset inner = scarabTarget->getUnitsInRadius(20, BWAPI::Filter::IsEnemy);
+			BWAPI::Unitset mid = scarabTarget->getUnitsInRadius(40, BWAPI::Filter::IsEnemy);
+			BWAPI::Unitset outer = scarabTarget->getUnitsInRadius(60, BWAPI::Filter::IsEnemy);
+
+			int currentDamage = 0;
+
+			// goes through all the units in the range of scarabs explosion
+			for (auto & targetWithin : outer)
+			{
+				// make check if unit in range here?
+				if (inner.find(targetWithin) != inner.end()) // in inner radius 100% damage
+				{
+					currentDamage += 4;
+				}
+				else if (mid.find(targetWithin) != mid.end()) // in mid 50% damage
+				{
+					currentDamage += 2;
+				}
+				else
+				{
+					currentDamage += 1; // outer 25% damage
+				}
+			}
+			// set this to be the newest closest target
+			if (currentDamage > maxDamage) {
+				maxDamage = currentDamage;
+				closestTarget = scarabTarget;
+			}
+		}
+		
+
+	}
+
     return closestTarget;
 }
 
@@ -130,7 +173,7 @@ int RangedManager::getAttackPriority(BWAPI::Unit rangedUnit, BWAPI::Unit target)
 	BWAPI::UnitType targetType = target->getType();
 
     
-    if (rangedUnit->getType() == BWAPI::UnitTypes::Zerg_Scourge)
+    /*if (rangedUnit->getType() == BWAPI::UnitTypes::Zerg_Scourge)
     {
         if (target->getType() == BWAPI::UnitTypes::Protoss_Carrier)
         {
@@ -142,7 +185,7 @@ int RangedManager::getAttackPriority(BWAPI::Unit rangedUnit, BWAPI::Unit target)
         {
             return 90;
         }
-    }
+    }*/
 
 	bool isThreat = rangedType.isFlyer() ? targetType.airWeapon() != BWAPI::WeaponTypes::None : targetType.groundWeapon() != BWAPI::WeaponTypes::None;
 
