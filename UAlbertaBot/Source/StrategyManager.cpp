@@ -160,14 +160,20 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 		// start with 1 of each so i can test the reaver drop 
 		if (numReaver < 1)
 		{
-			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 4));
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 2));
 			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Reaver, numReaver + 1));
 		}
-		else if (numShuttle < 1)
+
+		// test handling shuttles in productionmanager
+		/*
+		if ((numShuttle < 1) && (numReaver < 1) && (getRemainingReaverBuildTime() <= 900))
 		{
-			//??????? 2 - numShuttle was the thing before ?????????????
-			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Shuttle, numShuttle + 1));
+		//??????? 2 - numShuttle was the thing before ?????????????
+		goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Shuttle, numShuttle + 1));
 		}
+		*/
+
+		// mass dragoons if we're doing well
 		else if (BWAPI::Broodwar->self()->gas() > 200)
 		{
 			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 1));
@@ -184,6 +190,11 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 		//goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 4));
 		//goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 1));
 
+		// get that upgrade for dragoons
+		if (numDragoons > 0)
+		{
+			goal.push_back(std::pair<MetaType, int>(BWAPI::UpgradeTypes::Singularity_Charge, 1));
+		}
 	}
     else if (Config::Strategy::StrategyName == "Protoss_DTRush")
     {
@@ -229,6 +240,22 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 
 	return goal;
 }
+
+/*
+const int StrategyManager::getRemainingReaverBuildTime() const
+{
+	for (const auto & unit : BWAPI::Broodwar->self()->getUnits())
+	{
+		// search for reavers being built and return the time remaining
+		if (unit->getType() == BWAPI::UnitTypes::Protoss_Reaver)
+		{
+			return unit->getRemainingBuildTime();
+		}
+	}
+	// no reavers are being built
+	return -1;
+}
+*/
 
 const MetaPairVector StrategyManager::getTerranBuildOrderGoal() const
 {

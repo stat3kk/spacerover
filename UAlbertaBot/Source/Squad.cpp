@@ -260,6 +260,8 @@ bool Squad::needsToRegroup()
 		return false;
 	}
 
+	// TODO: add a detection of whether or not our shuttle is getting close so it won't be focused down
+
     bool retreat = score < 0;
     int switchTime = 100;
     bool waiting = false;

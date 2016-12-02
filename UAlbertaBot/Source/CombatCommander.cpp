@@ -219,7 +219,7 @@ void CombatCommander::updateReaverDropSquads()
 	int zealotSpotsRemaining = 2;
 	auto & dropUnits = dropSquad.getUnits(); 
 
-	BWAPI::Broodwar->printf("What squad? %d", whichSquad);
+	//BWAPI::Broodwar->printf("What squad? %d", whichSquad);
 	
 
 	// is the existing squad ready to go?
