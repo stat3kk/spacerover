@@ -106,7 +106,8 @@ void CombatCommander::updateIdleSquad()
 
 void CombatCommander::updateAttackSquads()
 {
-	if (!_dropReady)
+	// wait for our first drop squad
+	if (!_firstDropReady)
 	{
 		return;
 	}
@@ -268,15 +269,14 @@ void CombatCommander::updateReaverDropSquads()
 		}
 		else if (unit->getType() == BWAPI::UnitTypes::Protoss_Zealot)
 		{
-			
-			
 			// 2 zealots per shuttle
 			zealotSpotsRemaining -= 1;
 		}
 	}
 
-	// they all died so set up a new rever drop squad
-	if (!dropSquadHasReaver && dropSquad._transportManager._leftBase) {
+	// check if the main contenders have died and reset the squad if so
+	if (!dropSquadHasReaver && dropSquad._transportManager._leftBase)
+	{
 		dropSquad.clear();
 		dropSquadHasTransport = false;
 		dropSquadHasReaver = false;
@@ -286,8 +286,52 @@ void CombatCommander::updateReaverDropSquads()
 		return;
 	}
 
-	// if there are still units to be added to the drop squad, do it
-	if (zealotSpotsRemaining > 0 || (!dropSquadHasTransport || !dropSquadHasReaver))
+	// at least one survivor in the squad and shuttle HAS ALREADY LEFT BASE
+	if (dropSquad._transportManager._leftBase)
+	{
+		// look for reavers
+		for (auto & unit : dropUnits)
+		{
+			// found the reaver
+			if ((unit->getType() == BWAPI::UnitTypes::Protoss_Reaver))
+			{	// so we pick up the reaver and fly back to base
+
+				// reload scarabs 
+				for (int i = unit->getScarabCount(); i < 5; ++i)
+				{
+					unit->train(BWAPI::UnitTypes::Protoss_Scarab);
+				}
+
+				//BWAPI::Broodwar->printf("Is the reaver safe? %d", dropSquad._transportManager.isSafe(unit));
+				// we might want to deal with the case when the reaver runs out of scarabs
+
+
+				/*
+				no enemies in range && we aren't returning
+				|| ( we are not safe && (shot a scarab || no scarabs left) )
+				*/
+				if (
+					((dropSquad._transportManager.isSafe(unit) == 2) && (!dropSquad._transportManager._returning))
+					|| (!dropSquad._transportManager.isSafe(unit) &&
+					(dropSquad._transportManager.scarabShot(unit) || (unit->getScarabCount() == 0))
+					)
+					)
+				{
+					dropSquad._transportManager._transportShip->load(unit);
+					dropSquad._transportManager._returning = true;
+				}
+				/* if the reaver is safe, go and attack the enemy */
+				else if ((dropSquad._transportManager._transportShip->getSpaceRemaining() == 4) && dropSquad._transportManager.isSafe(unit))
+				{
+					dropSquad._transportManager._returning = false;
+				}
+
+			}
+		}
+	}
+
+	// squad has empty slots and HASN'T LEFT BASE
+	else if (zealotSpotsRemaining > 0 || (!dropSquadHasTransport || !dropSquadHasReaver))
 	{
 		for (auto & unit : _combatUnits)
 		{
@@ -322,101 +366,41 @@ void CombatCommander::updateReaverDropSquads()
 		//if (!dropSquadHasReaver) { BWAPI::Broodwar->printf("Waiting for reaver, current: %d\n", UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Reaver)); }
 		//if (zealotSpotsRemaining > 0) { BWAPI::Broodwar->printf("Waiting for zealots, current: %d\n", UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Zealot)); }
 	}
-	// drop squad is ready to roll (or already rolling out)
+	// squad is ready to roll and HASN'T LEFT BASE
 	else
 	{
-		
-		
-
-		// BRANDON'S do not delete
-		_dropReady = true;
+		_firstDropReady = true;
 		// load em up
 
 		// we can access the _transportShip from dropSquad
 		/*if we have not left the base yet*/ 
-		if (! dropSquad._transportManager._leftBase)
+
+		// because order of loading units matter
+		// load zealots
+		for (auto & unit : dropUnits)
 		{
-
-			// because order of loading units matter
-
-			// load zealots
-			for (auto & unit : dropUnits)
+			// unit is zealot
+			if (unit->getType() == BWAPI::UnitTypes::Protoss_Zealot)
 			{
-				// unit is zealot
-				if (unit->getType() == BWAPI::UnitTypes::Protoss_Zealot)
-				{
-					dropSquad._transportManager._transportShip->load(unit);
-				}
-			}
-			// load reaver
-			for (auto & unit : dropUnits)
-			{
-				// unit is reaver
-				if (unit->getType() == BWAPI::UnitTypes::Protoss_Reaver)
-				{
-					dropSquad._transportManager._transportShip->load(unit);
-					break;
-				}
-			}
-		
-		}
-		
-		else // we have left base
-		{
-			// look for reavers
-			for (auto & unit : dropUnits)
-			{
-				// found the reaver
-				if ((unit->getType() == BWAPI::UnitTypes::Protoss_Reaver) )
-				{	// so we pick up the reaver and fly back to base
-					
-					// reload scarabs when needed
-					if (unit->getScarabCount() < 3)
-					{
-						for (int i = unit->getScarabCount(); i < 5; ++i)
-						{
-							unit->train(BWAPI::UnitTypes::Protoss_Scarab);
-						}
-					}
-
-					
-					
-					//BWAPI::Broodwar->printf("Is the reaver safe? %d", dropSquad._transportManager.isSafe(unit));
-					// we might want to deal with the case when the reaver runs out of scarabs
-							
-
-					/*
-					  no enemies in range && we aren't returning
-					  || ( we are not safe && (shot a scarab || no scarabs left) )
-					*/
-					if (
-						  ( (dropSquad._transportManager.isSafe(unit) == 2) && (!dropSquad._transportManager._returning) )
-						  || (!dropSquad._transportManager.isSafe(unit) && 
-						     (dropSquad._transportManager.scarabShot(unit) || (unit->getScarabCount() == 0))
-						  ) 
-					   ) 
-					{		
-						dropSquad._transportManager._transportShip->load(unit);
-						dropSquad._transportManager._returning = true;
-					}
-					/* if the reaver is safe, go and attack the enemy */
-					else if ((dropSquad._transportManager._transportShip->getSpaceRemaining() == 4) && dropSquad._transportManager.isSafe(unit))
-					{
-						dropSquad._transportManager._returning = false;
-					}
-
-				}
+				dropSquad._transportManager._transportShip->load(unit);
 			}
 		}
-		
-		
+		// load reaver
+		for (auto & unit : dropUnits)
+		{
+			// unit is reaver
+			if (unit->getType() == BWAPI::UnitTypes::Protoss_Reaver)
+			{
+				dropSquad._transportManager._transportShip->load(unit);
+				break;
+			}
+		}
 
 		// hmmm TransportManager handles this for the shuttle, not sure about the other units
 		SquadOrder dropOrder(SquadOrderTypes::ReaverDrop, getMainAttackLocation(), 800, "Attack Enemy Base");
 		dropSquad.setSquadOrder(dropOrder);
 	}
 
-	
 }
 
 void CombatCommander::updateScoutDefenseSquad() 

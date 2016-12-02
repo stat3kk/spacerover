@@ -161,7 +161,8 @@ void TransportManager::update()
 	moveTroops();
 
 	/* if we want to return but we haven't loaded the reaver */
-	if (_transportShip && _returning && _transportShip->getSpaceRemaining() > 5){
+	if (_transportShip && _returning && _transportShip->getSpaceRemaining() > 5)
+	{
 		return;
 	}
 

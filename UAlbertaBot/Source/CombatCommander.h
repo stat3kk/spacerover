@@ -13,7 +13,7 @@ class CombatCommander
 	SquadData       _squadData;
     BWAPI::Unitset  _combatUnits;
     bool            _initialized;
-	bool			_dropReady;
+	bool			_firstDropReady;
 
     void            updateScoutDefenseSquad();
 	void            updateDefenseSquads();
