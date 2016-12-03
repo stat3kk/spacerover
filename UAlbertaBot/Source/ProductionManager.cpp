@@ -110,34 +110,45 @@ void ProductionManager::update()
 		_enemyCloakedDetected = true;
 	}
 
+	// need to check to see if we have the forge to make photon cannons
+	if (!_buildingForge && BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Forge) == 0 && BWAPI::Broodwar->getFrameCount() > 2000)
+	{
+		BWAPI::Broodwar->printf("no forge, pushing a forge!");
+		_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Forge), true);
+		_buildingForge = true;
+	}
+
 	// if enemy is rushing setup our defenses. THIS SETS UP 3 CANNONS ONCE
 	// conditions: if enemy is rushing and it is before ~10minutes
 	if (!_enemyRushDetected && InformationManager::Instance().enemyIsRushing() && BWAPI::Broodwar->getFrameCount() < 14000) {
 		// BWAPI::Broodwar->printf("framecount = %d", BWAPI::Broodwar->getFrameCount());
-		// need to check to see if we have the forge to make photon cannons
-		if (!_buildingForge && BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Forge) == 0)
-		{
-			BWAPI::Broodwar->printf("no forge, pushing a forge!");
-			_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Forge), true);
-			_buildingForge = true;
-		}
+		BWAPI::Broodwar->printf("waiting for forge....");
 		if (BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Forge) > 0) {
 			// we don't want to have more than 3 cannons at a time
 			BWAPI::Broodwar->printf("Our current cannons: %d", BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon));
 			// maintain 3 cannons at all time in case? 
-			if (BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon) < 3)
+			if (!_enemyRushDetected && BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon) < 3)
 			{
 				BWAPI::Broodwar->printf("pushing 3 cannons");
 				_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Photon_Cannon), true);
 				_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Photon_Cannon), true);
-				_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Photon_Cannon), true);
+				//_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Photon_Cannon), true);
+				
 			}
-
 			_enemyRushDetected = true;
 		}
 	}
 
-	
+	// set max amount of probes
+	//BWAPI::Broodwar->printf("Our current probes: %d", BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Probe));
+	if (BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Probe) >= 15) {
+		BWAPI::Broodwar->printf("Our current probes: %d", BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Probe));
+		BuildOrderItem & currentItem = _queue.getHighestPriorityItem();
+		if (currentItem.metaType.getUnitType() == BWAPI::UnitTypes::Protoss_Probe) {
+			_queue.removeCurrentHighestPriorityItem();
+		}
+	}
+
 }
 
 // on unit destroy
@@ -376,8 +387,7 @@ void ProductionManager::create(BWAPI::Unit producer, BuildOrderItem & item)
     MetaType t = item.metaType;
 	if (t.getUnitType().isBuilding() && t.getUnitType() == BWAPI::UnitTypes::Protoss_Photon_Cannon) {
 		BWAPI::Broodwar->printf("photon cannon is the unit type! lets place it at [%d, %d]", BWAPI::Broodwar->self()->getStartLocation().x, BWAPI::Broodwar->self()->getStartLocation().y);
-		BWAPI::Broodwar->self()->getStartLocation().x = 0;
-		BWAPI::Broodwar->self()->getStartLocation().y = 0;
+
 		BuildingManager::Instance().addBuildingTask(t.getUnitType(), BWAPI::Broodwar->self()->getStartLocation(), item.isGasSteal);
 	}
 
@@ -390,6 +400,11 @@ void ProductionManager::create(BWAPI::Unit producer, BuildOrderItem & item)
     {
         // send the building task to the building manager
         BuildingManager::Instance().addBuildingTask(t.getUnitType(), BWAPI::Broodwar->self()->getStartLocation(), item.isGasSteal);
+
+		if (t.getUnitType() == BWAPI::UnitTypes::Protoss_Robotics_Facility)
+		{
+			_queue.queueAsHighestPriority(MetaType(BWAPI::UpgradeTypes::Singularity_Charge), true);
+		}
     }
     else if (t.getUnitType().isAddon())
     {

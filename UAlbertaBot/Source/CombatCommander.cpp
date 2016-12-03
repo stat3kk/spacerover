@@ -263,7 +263,7 @@ void CombatCommander::updateReaverDropSquads()
 			dropSquadHasReaver = true;
 			continue;
 		}
-		if (zealotSpotsRemaining == 0)
+		if (zealotSpotsRemaining <= 0)
 		{
 			continue;
 		}
@@ -282,6 +282,8 @@ void CombatCommander::updateReaverDropSquads()
 		dropSquadHasReaver = false;
 		zealotSpotsRemaining = 2;
 		dropSquad._transportManager.clearAll();
+
+		BWAPI::Broodwar->printf("Drop squad has perished");
 
 		return;
 	}
