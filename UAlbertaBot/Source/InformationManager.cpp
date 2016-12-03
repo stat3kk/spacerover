@@ -585,32 +585,32 @@ bool InformationManager::enemyHasCloakedUnits()
 bool InformationManager::enemyIsRushing() 
 {
 	int rush_units = 0; // keep track of how many units are found, reinitialized in each call
-	BWAPI::Broodwar->printf("CHECKING IF RUSHING!");
+	// BWAPI::Broodwar->printf("CHECKING IF RUSHING!");
 	for (const auto & kv : getUnitData(_enemy).getUnits())
 	{
 		const UnitInfo & ui(kv.second);
-		BWAPI::Broodwar->printf("CHECKING IF RUSHING!!!!!!!!!!");
-		BWAPI::Broodwar->printf("RUSH UNITS IS %d", rush_units);
-		BWAPI::Broodwar->printf("UNIT TYPE IS %s", ui.type.getName().c_str());
+		// BWAPI::Broodwar->printf("CHECKING IF RUSHING!!!!!!!!!!");
+		// BWAPI::Broodwar->printf("RUSH UNITS IS %d", rush_units);
+		// BWAPI::Broodwar->printf("UNIT TYPE IS %s", ui.type.getName().c_str());
 		// check to see if there are multiple types of rushing units
 		if (ui.type == BWAPI::UnitTypes::Zerg_Zergling) {
 			rush_units++;
-			BWAPI::Broodwar->printf("RUSH UNITS IS ZERGLING");
+			//BWAPI::Broodwar->printf("RUSH UNITS IS ZERGLING");
 		}
 
 		if (ui.type == BWAPI::UnitTypes::Protoss_Zealot) {
 			rush_units++;
-			BWAPI::Broodwar->printf("RUSH UNITS IS ZEALOT");
+			//BWAPI::Broodwar->printf("RUSH UNITS IS ZEALOT");
 		}
 
 		if (ui.type == BWAPI::UnitTypes::Terran_Marine) {
 			rush_units++;
-			BWAPI::Broodwar->printf("RUSH UNITS IS MARINE");
+			//BWAPI::Broodwar->printf("RUSH UNITS IS MARINE");
 		}
 	
 	}
 	BWAPI::Broodwar->printf("RUSH UNITS OUT OF FOR LOOP IS %d", rush_units);
-	if (rush_units >= 4) { // rush probably coming. DO SOMETHING
+	if (rush_units >= 6) { // rush probably coming. DO SOMETHING
 		return true;
 	} else {
 		return false;

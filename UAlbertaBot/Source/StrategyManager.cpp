@@ -233,13 +233,47 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 	}
 
     // set up cannons to save self
-	BWAPI::Broodwar->printf("checking");
     if (InformationManager::Instance().enemyIsRushing()) {
-		BWAPI::Broodwar->printf("pushing cannon");
-        // need to check to see if we have the building to make photon cannons
-        //if (BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Forge)) {
-           goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Photon_Cannon, 1));
-        //}
+		
+        // need to check to see if we have the forge to make photon cannons
+		if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Forge) == 0)
+		{
+			BWAPI::Broodwar->printf("no forge, pushing a forge!");
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Forge, 1));
+		} else {
+			// we don't want to have more than 3 cannons at a time
+			BWAPI::Broodwar->printf("Our current cannons: %d", BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon));
+			// maintain 3 cannons at all time in case? 
+			if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon) < 3)
+			{
+				if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon) == 0) {
+					BWAPI::Broodwar->printf("pushing 3 cannons");
+					goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Photon_Cannon, 3));
+				}
+				else if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon) == 1) {
+					BWAPI::Broodwar->printf("pushing 2 cannons");
+					goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Photon_Cannon, 2));
+				}
+				else { // we have 2 cannons
+					BWAPI::Broodwar->printf("pushing 1 cannon");
+					goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Photon_Cannon, 1));
+				}
+			}
+			/*
+			// use resources more efficiently. If they rush us, chances are they won't need to rush again. we can get by with just initial setup of cannons maybe?
+			if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon) == 0)
+			{
+				BWAPI::Broodwar->printf("pushing 3 cannons");
+				goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Photon_Cannon, 3));
+			}
+			*/
+		}
+
+		// if our nexus has been destroyed by a rush 
+		if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Nexus) == 0)
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Nexus, 1));
+		}
 
     }
 
