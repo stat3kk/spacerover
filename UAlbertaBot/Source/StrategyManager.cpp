@@ -188,12 +188,12 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 		//goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 4));
 		//goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 1));
 
-		/* get that upgrade for dragoons
+		/* get that upgrade for dragoons */
 		if (numDragoons > 0)
 		{
 			goal.push_back(std::pair<MetaType, int>(BWAPI::UpgradeTypes::Singularity_Charge, 1));
 		}
-		*/
+		
 		// make sure drop squad has enough zealots
 		if (numReaver > 0 && numShuttle > 0 && numZealots <= 1)
 		{
