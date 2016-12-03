@@ -8,8 +8,6 @@ ProductionManager::ProductionManager()
 	, _enemyCloakedDetected          (false)
 	, _enemyRushDetected			 (false)
 	, _buildingForge				 (false)
-	// , _timer()
-
 
 {
     setBuildOrder(StrategyManager::Instance().getOpeningBookBuildOrder());
@@ -113,8 +111,9 @@ void ProductionManager::update()
 	}
 
 	// if enemy is rushing setup our defenses. THIS SETS UP 3 CANNONS ONCE
-	if (!_enemyRushDetected && InformationManager::Instance().enemyIsRushing()) {
-
+	// conditions: if enemy is rushing and it is before ~10minutes
+	if (!_enemyRushDetected && InformationManager::Instance().enemyIsRushing() && BWAPI::Broodwar->getFrameCount() < 14000) {
+		// BWAPI::Broodwar->printf("framecount = %d", BWAPI::Broodwar->getFrameCount());
 		// need to check to see if we have the forge to make photon cannons
 		if (!_buildingForge && BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Forge) == 0)
 		{
@@ -138,7 +137,7 @@ void ProductionManager::update()
 		}
 	}
 
-
+	
 }
 
 // on unit destroy
