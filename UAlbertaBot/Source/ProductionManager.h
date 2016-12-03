@@ -17,9 +17,12 @@ class ProductionManager
     
     BuildOrderQueue     _queue;
     BWAPI::TilePosition _predictedTilePosition;
+	bool				_enemyRushDetected;
     bool                _enemyCloakedDetected;
     bool                _assignedWorkerForThisBuilding;
     bool                _haveLocationForThisBuilding;
+	bool				_buildingForge;
+	// SparCraft::Timer	_timer;
     
     BWAPI::Unit         getClosestUnitToPosition(const BWAPI::Unitset & units,BWAPI::Position closestTo);
     BWAPI::Unit         selectUnitOfType(BWAPI::UnitType type,BWAPI::Position closestTo = BWAPI::Position(0,0));
@@ -40,6 +43,8 @@ class ProductionManager
     int                 getFreeMinerals();
     int                 getFreeGas();
     bool                canPlanBuildOrderNow() const;
+
+
 
 public:
 

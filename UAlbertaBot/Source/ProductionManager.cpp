@@ -6,6 +6,11 @@ ProductionManager::ProductionManager()
 	: _assignedWorkerForThisBuilding (false)
 	, _haveLocationForThisBuilding   (false)
 	, _enemyCloakedDetected          (false)
+	, _enemyRushDetected			 (false)
+	, _buildingForge				 (false)
+	// , _timer()
+
+
 {
     setBuildOrder(StrategyManager::Instance().getOpeningBookBuildOrder());
 }
@@ -106,6 +111,34 @@ void ProductionManager::update()
 
 		_enemyCloakedDetected = true;
 	}
+
+	// if enemy is rushing setup our defenses. THIS SETS UP 3 CANNONS ONCE
+	if (!_enemyRushDetected && InformationManager::Instance().enemyIsRushing()) {
+
+		// need to check to see if we have the forge to make photon cannons
+		if (!_buildingForge && BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Forge) == 0)
+		{
+			BWAPI::Broodwar->printf("no forge, pushing a forge!");
+			_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Forge), true);
+			_buildingForge = true;
+		}
+		if (BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Forge) > 0) {
+			// we don't want to have more than 3 cannons at a time
+			BWAPI::Broodwar->printf("Our current cannons: %d", BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon));
+			// maintain 3 cannons at all time in case? 
+			if (BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon) < 3)
+			{
+				BWAPI::Broodwar->printf("pushing 3 cannons");
+				_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Photon_Cannon), true);
+				_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Photon_Cannon), true);
+				_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Photon_Cannon), true);
+			}
+
+			_enemyRushDetected = true;
+		}
+	}
+
+
 }
 
 // on unit destroy

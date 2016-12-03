@@ -231,7 +231,8 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Observer, 1));
 		}
 	}
-
+	
+	/* MOVED TO PRODUCTION MANAGER
     // set up cannons to save self
     if (InformationManager::Instance().enemyIsRushing()) {
 		
@@ -240,7 +241,8 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 		{
 			BWAPI::Broodwar->printf("no forge, pushing a forge!");
 			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Forge, 1));
-		} else {
+		} 
+		if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Forge) > 0) {
 			// we don't want to have more than 3 cannons at a time
 			BWAPI::Broodwar->printf("Our current cannons: %d", BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon));
 			// maintain 3 cannons at all time in case? 
@@ -259,23 +261,24 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 					goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Photon_Cannon, 1));
 				}
 			}
-			/*
+			
 			// use resources more efficiently. If they rush us, chances are they won't need to rush again. we can get by with just initial setup of cannons maybe?
 			if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon) == 0)
 			{
 				BWAPI::Broodwar->printf("pushing 3 cannons");
 				goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Photon_Cannon, 3));
 			}
-			*/
-		}
-
-		// if our nexus has been destroyed by a rush 
-		if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Nexus) == 0)
-		{
-			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Nexus, 1));
+			
 		}
 
     }
+	*/
+
+	// if our nexus has been destroyed by a rush 
+	if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Nexus) == 0)
+	{
+		goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Nexus, 1));
+	}
 
     // if we want to expand, insert a nexus into the build order
 	if (shouldExpandNow())
