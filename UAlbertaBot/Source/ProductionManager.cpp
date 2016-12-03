@@ -401,10 +401,6 @@ void ProductionManager::create(BWAPI::Unit producer, BuildOrderItem & item)
         // send the building task to the building manager
         BuildingManager::Instance().addBuildingTask(t.getUnitType(), BWAPI::Broodwar->self()->getStartLocation(), item.isGasSteal);
 
-		if (t.getUnitType() == BWAPI::UnitTypes::Protoss_Robotics_Facility)
-		{
-			_queue.queueAsHighestPriority(MetaType(BWAPI::UpgradeTypes::Singularity_Charge), true);
-		}
     }
     else if (t.getUnitType().isAddon())
     {
