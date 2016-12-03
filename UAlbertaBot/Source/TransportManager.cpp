@@ -283,8 +283,8 @@ void TransportManager::moveTroops()
 	*/
 	if 
 		(
-		  ( (target != NULL) && (_transportShip->getDistance(target) < weaponRange) ) ||
-		  ( (transportHP < 100) && _transportShip->canUnloadAtPosition(_transportShip->getPosition()) )
+		  ( (target != NULL) && (_transportShip->getDistance(target) < weaponRange) ) //||
+		  //( (transportHP < 100) && _transportShip->canUnloadAtPosition(_transportShip->getPosition()) )
 		)
 	{
 

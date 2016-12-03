@@ -156,7 +156,7 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 	// added strategy here
 	else if (Config::Strategy::StrategyName == "Protoss_ReaverDrop")
 	{
-		BWAPI::Broodwar->printf("reaver dropping");
+		// BWAPI::Broodwar->printf("reaver dropping");
 		// start with 1 of each so i can test the reaver drop 
 		if (numReaver < 1)
 		{
@@ -164,19 +164,17 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Reaver, numReaver + 1));
 		}
 
-		// test handling shuttles in productionmanager
-		/*
-		if ((numShuttle < 1) && (numReaver < 1) && (getRemainingReaverBuildTime() <= 900))
+		// test handling shuttles in productionmanager (faster)
+		// edge case: while productionmanager automatically queues a shuttle, what if it dies?
+		if ((numShuttle < 1) && (numReaver < 1))
 		{
-		//??????? 2 - numShuttle was the thing before ?????????????
-		goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Shuttle, numShuttle + 1));
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Shuttle, numShuttle + 1));
 		}
-		*/
 
-		// mass dragoons if we're doing well
+		// mass dragoons once we're doing well
 		else if (BWAPI::Broodwar->self()->gas() > 200)
 		{
-			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 1));
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 2));
 		}
 		else
 		{
@@ -190,10 +188,16 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 		//goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 4));
 		//goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 1));
 
-		// get that upgrade for dragoons
+		/* get that upgrade for dragoons
 		if (numDragoons > 0)
 		{
 			goal.push_back(std::pair<MetaType, int>(BWAPI::UpgradeTypes::Singularity_Charge, 1));
+		}
+		*/
+		// make sure drop squad has enough zealots
+		if (numReaver > 0 && numShuttle > 0 && numZealots <= 1)
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 2));
 		}
 	}
     else if (Config::Strategy::StrategyName == "Protoss_DTRush")
