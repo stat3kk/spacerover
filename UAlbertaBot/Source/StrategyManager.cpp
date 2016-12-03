@@ -166,7 +166,7 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 
 		// test handling shuttles in productionmanager (faster)
 		// edge case: while productionmanager automatically queues a shuttle, what if it dies?
-		if ((numShuttle < 1) && (numReaver < 1))
+		if ((numShuttle < 1) && (numReaver > 0))
 		{
 			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Shuttle, numShuttle + 1));
 		}

@@ -22,6 +22,9 @@ class ProductionManager
     bool                _assignedWorkerForThisBuilding;
     bool                _haveLocationForThisBuilding;
 	bool				_buildingForge;
+	bool				_repairingNexus;
+	bool				_repairingCore;
+	bool				_isExpand;
     
     BWAPI::Unit         getClosestUnitToPosition(const BWAPI::Unitset & units,BWAPI::Position closestTo);
     BWAPI::Unit         selectUnitOfType(BWAPI::UnitType type,BWAPI::Position closestTo = BWAPI::Position(0,0));
