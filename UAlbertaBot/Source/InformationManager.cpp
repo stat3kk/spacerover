@@ -613,10 +613,10 @@ bool InformationManager::enemyIsRushing()
 	}
 
 	// rush probably coming. DO SOMETHING
-	if (z_rush >= 7) { 
+	if (z_rush >= 6) { 
 		return true;
 	}
-	if (p_rush >= 3) {
+	if (p_rush >= 4) {
 		return true;
 	}
 	if (t_rush >= 5) {

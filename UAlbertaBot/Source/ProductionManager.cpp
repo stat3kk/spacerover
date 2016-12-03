@@ -374,6 +374,12 @@ void ProductionManager::create(BWAPI::Unit producer, BuildOrderItem & item)
     }
 
     MetaType t = item.metaType;
+	if (t.getUnitType().isBuilding() && t.getUnitType() == BWAPI::UnitTypes::Protoss_Photon_Cannon) {
+		BWAPI::Broodwar->printf("photon cannon is the unit type! lets place it at [%d, %d]", BWAPI::Broodwar->self()->getStartLocation().x, BWAPI::Broodwar->self()->getStartLocation().y);
+		BWAPI::Broodwar->self()->getStartLocation().x = 0;
+		BWAPI::Broodwar->self()->getStartLocation().y = 0;
+		BuildingManager::Instance().addBuildingTask(t.getUnitType(), BWAPI::Broodwar->self()->getStartLocation(), item.isGasSteal);
+	}
 
     // if we're dealing with a building
     if (t.isUnit() && t.getUnitType().isBuilding() 
