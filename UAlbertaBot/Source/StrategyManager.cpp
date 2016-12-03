@@ -162,23 +162,31 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 		{
 			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 2));
 			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Reaver, numReaver + 1));
+			goal.push_back(std::pair<MetaType, int>(BWAPI::UpgradeTypes::Gravitic_Drive, 1));
 		}
 
 		// test handling shuttles in productionmanager (faster)
-		// edge case: while productionmanager automatically queues a shuttle, what if it dies?
+		/* edge case: while productionmanager automatically queues a shuttle, what if it dies?
 		if ((numShuttle < 1) && (numReaver > 0))
 		{
 			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Shuttle, numShuttle + 1));
 		}
+		*/
 
-		// mass dragoons once we're doing well
-		else if (BWAPI::Broodwar->self()->gas() > 200)
+		// mass dragoons once we're off the ground
+		else if (BWAPI::Broodwar->self()->gas() > 150)
 		{
 			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 2));
 		}
 		else
 		{
 			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 1));
+		}
+		// doing well, get some upgrades and double the dragoons
+		if (numNexusAll >= 2)
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 2));
+			goal.push_back(std::pair<MetaType, int>(BWAPI::UpgradeTypes::Protoss_Ground_Weapons, 1));
 		}
 		// make sure shuttles are out first. How about no??? Whats the point of having a shuttle with no
 		// attacking units?.
@@ -189,9 +197,15 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 		//goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 1));
 
 		/* get that upgrade for dragoons */
-		if (numDragoons > 0)
+		if (numDragoons > 2)
 		{
 			goal.push_back(std::pair<MetaType, int>(BWAPI::UpgradeTypes::Singularity_Charge, 1));
+		}
+
+		if (BWAPI::Broodwar->getFrameCount() > 20000)
+		{
+			//goal.push_back(std::pair<MetaType, int>(BWAPI::UpgradeTypes::Scarab_Damage, 1));
+			goal.push_back(std::pair<MetaType, int>(BWAPI::UpgradeTypes::Protoss_Plasma_Shields, 1));
 		}
 		
 		// make sure drop squad has enough zealots

@@ -187,7 +187,6 @@ void ProductionManager::update()
 			}
 		}
 	}
-	
 }
 
 // on unit destroy
