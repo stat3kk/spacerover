@@ -106,8 +106,8 @@ void CombatCommander::updateIdleSquad()
 
 void CombatCommander::updateAttackSquads()
 {
-	// wait for our first drop squad
-	if (!_firstDropReady)
+	// wait for our first drop squad or until a certain amount of time has passed
+	if (!_firstDropReady && BWAPI::Broodwar->getFrameCount() < 11000)
 	{
 		return;
 	}
