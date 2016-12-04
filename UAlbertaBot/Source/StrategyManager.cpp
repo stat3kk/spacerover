@@ -120,7 +120,9 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 	int numProbes           = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Probe);
 	int numNexusCompleted   = BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Nexus);
 	int numNexusAll         = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Nexus);
+	int numForge			= BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Forge);
 	int numCyber            = BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Cybernetics_Core);
+	int numRoboticsSup		= BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Robotics_Support_Bay);
 	int numCannon           = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon);
     int numScout            = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Corsair);
     int numReaver           = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Reaver);
@@ -162,6 +164,12 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 		{
 			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 2));
 			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Reaver, numReaver + 1));
+
+			// shuttle speed upgrade, make sure robotics support bay is still alive
+			if (numRoboticsSup == 0)
+			{
+				goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Robotics_Support_Bay, numRoboticsSup + 1));
+			}
 			goal.push_back(std::pair<MetaType, int>(BWAPI::UpgradeTypes::Gravitic_Drive, 1));
 		}
 
@@ -180,12 +188,18 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 		}
 		else
 		{
-			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 1));
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 2));
 		}
 		// doing well, get some upgrades and double the dragoons
 		if (numNexusAll >= 2)
 		{
-			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 2));
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 4));
+
+			// ground weapons upgrade, make sure forge is still alive
+			if (numForge == 0)
+			{
+				goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Forge, numForge + 1));
+			}
 			goal.push_back(std::pair<MetaType, int>(BWAPI::UpgradeTypes::Protoss_Ground_Weapons, 1));
 		}
 		// make sure shuttles are out first. How about no??? Whats the point of having a shuttle with no
@@ -199,12 +213,28 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 		/* get that upgrade for dragoons */
 		if (numDragoons > 2)
 		{
+			// dragoon range upgrade, make sure cybernetics core is still alive
+			if (numCyber == 0)
+			{
+				goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Cybernetics_Core, numCyber + 1));
+			}
 			goal.push_back(std::pair<MetaType, int>(BWAPI::UpgradeTypes::Singularity_Charge, 1));
 		}
 
 		if (BWAPI::Broodwar->getFrameCount() > 20000)
 		{
-			//goal.push_back(std::pair<MetaType, int>(BWAPI::UpgradeTypes::Scarab_Damage, 1));
+			// scarab damage upgrade, make sure robotics support bay is still alive
+			if (numRoboticsSup == 0)
+			{
+				goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Robotics_Support_Bay, numRoboticsSup + 1));
+			}
+			goal.push_back(std::pair<MetaType, int>(BWAPI::UpgradeTypes::Scarab_Damage, 1));
+
+			// plasma shield upgrade, make sure forge is still alive
+			if (numForge == 0)
+			{
+				goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Forge, numForge + 1));
+			}
 			goal.push_back(std::pair<MetaType, int>(BWAPI::UpgradeTypes::Protoss_Plasma_Shields, 1));
 		}
 		
@@ -249,48 +279,6 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Observer, 1));
 		}
 	}
-	
-	/* MOVED TO PRODUCTION MANAGER
-    // set up cannons to save self
-    if (InformationManager::Instance().enemyIsRushing()) {
-		
-        // need to check to see if we have the forge to make photon cannons
-		if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Forge) == 0)
-		{
-			BWAPI::Broodwar->printf("no forge, pushing a forge!");
-			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Forge, 1));
-		} 
-		if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Forge) > 0) {
-			// we don't want to have more than 3 cannons at a time
-			BWAPI::Broodwar->printf("Our current cannons: %d", BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon));
-			// maintain 3 cannons at all time in case? 
-			if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon) < 3)
-			{
-				if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon) == 0) {
-					BWAPI::Broodwar->printf("pushing 3 cannons");
-					goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Photon_Cannon, 3));
-				}
-				else if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon) == 1) {
-					BWAPI::Broodwar->printf("pushing 2 cannons");
-					goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Photon_Cannon, 2));
-				}
-				else { // we have 2 cannons
-					BWAPI::Broodwar->printf("pushing 1 cannon");
-					goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Photon_Cannon, 1));
-				}
-			}
-			
-			// use resources more efficiently. If they rush us, chances are they won't need to rush again. we can get by with just initial setup of cannons maybe?
-			if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon) == 0)
-			{
-				BWAPI::Broodwar->printf("pushing 3 cannons");
-				goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Photon_Cannon, 3));
-			}
-			
-		}
-
-    }
-	*/
 
 	// if our nexus has been destroyed by a rush 
 	if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Nexus) == 0)

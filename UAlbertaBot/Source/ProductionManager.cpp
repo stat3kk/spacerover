@@ -137,7 +137,8 @@ void ProductionManager::update()
 
 	// if enemy is rushing setup our defenses. THIS SETS UP 3 CANNONS ONCE
 	// conditions: if enemy is rushing and it is before ~10minutes
-	if (!_enemyRushDetected && InformationManager::Instance().enemyIsRushing() && BWAPI::Broodwar->getFrameCount() < 14000) {
+	if (!_enemyRushDetected && InformationManager::Instance().enemyIsRushing() && BWAPI::Broodwar->getFrameCount() < 14000)
+	{
 		// BWAPI::Broodwar->printf("framecount = %d", BWAPI::Broodwar->getFrameCount());
 		// BWAPI::Broodwar->printf("waiting for forge....");
 		// need to check to see if we have the forge to make photon cannons
@@ -264,6 +265,7 @@ void ProductionManager::manageBuildOrderQueue()
 			_queue.removeCurrentHighestPriorityItem();
 
 			// if we started building a reaver, get a shuttle into the queue asap
+			// shuttle guaranteed to come directly after reaver once it finishes building
 			if (Config::Strategy::StrategyName == "Protoss_ReaverDrop")
 			{
 				if (currentItem.metaType.getUnitType() == BWAPI::UnitTypes::Protoss_Reaver)
