@@ -181,9 +181,9 @@ void ProductionManager::update()
 		if (BWAPI::Broodwar->getFrameCount() > 13500) {
 			_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Nexus), true);
 		}
-
 		_isExpand = true;
 	} 
+
 	// if we have 2 nexus
 	else if (BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Probe) >= 30 && BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Nexus) > 1) {
 		BWAPI::Broodwar->printf("Our current probes: %d", BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Probe));
@@ -194,6 +194,18 @@ void ProductionManager::update()
 			}
 		}
 	}
+
+	if (BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Gateway) >= 4) {
+		// we don't want to have more than 4 gateways at a time
+		if (!_queue.isEmpty()) {
+			BuildOrderItem & currentItem = _queue.getHighestPriorityItem();
+			if (currentItem.metaType.getUnitType() == BWAPI::UnitTypes::Protoss_Gateway) {
+				BWAPI::Broodwar->printf("Our current gateway: %d", BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Gateway));
+				_queue.removeCurrentHighestPriorityItem();
+			}
+		}
+	}
+
 }
 
 // on unit destroy
