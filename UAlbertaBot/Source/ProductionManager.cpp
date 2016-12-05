@@ -142,12 +142,14 @@ void ProductionManager::update()
 		// BWAPI::Broodwar->printf("framecount = %d", BWAPI::Broodwar->getFrameCount());
 		// BWAPI::Broodwar->printf("waiting for forge....");
 		// need to check to see if we have the forge to make photon cannons
+		/* WE MOVED FORGE TO BUILDING ORDER
 		if (!_buildingForge && BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Forge) == 0)
 		{
 			BWAPI::Broodwar->printf("no forge, pushing a forge!");
 			_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Forge), true);
 			_buildingForge = true;
 		}
+		*/
 		if (BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Forge) > 0) {
 			// we don't want to have more than 3 cannons at a time
 			BWAPI::Broodwar->printf("Our current cannons: %d", BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon));
@@ -175,7 +177,11 @@ void ProductionManager::update()
 				_queue.removeCurrentHighestPriorityItem();
 			}
 		}
-		_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Nexus), true);
+		// only expand if we have passed a certain time, else rely on the default expansion
+		if (BWAPI::Broodwar->getFrameCount() > 13500) {
+			_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Nexus), true);
+		}
+
 		_isExpand = true;
 	} 
 	// if we have 2 nexus
