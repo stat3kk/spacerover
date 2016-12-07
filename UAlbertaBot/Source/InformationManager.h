@@ -62,6 +62,7 @@ public:
     BWTA::BaseLocation *    getMainBaseLocation(BWAPI::Player player);
 
     bool                    enemyHasCloakedUnits();
+    bool                    enemyIsRushing();
 
     void                    drawExtendedInterface();
     void                    drawUnitInformation(int x,int y);

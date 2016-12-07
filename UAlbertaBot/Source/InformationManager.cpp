@@ -1,5 +1,6 @@
 #include "Common.h"
 #include "InformationManager.h"
+#include <list>
 
 using namespace UAlbertaBot;
 
@@ -579,4 +580,48 @@ bool InformationManager::enemyHasCloakedUnits()
     }
 
 	return false;
+}
+
+bool InformationManager::enemyIsRushing()
+{
+	// keep track of how many units are found, reinitialized in each call, terran/zerg/protoss have diff counters
+	int z_rush = 0;
+	int p_rush = 0;
+	int t_rush = 0;
+	// BWAPI::Broodwar->printf("CHECKING IF RUSHING!");
+	for (const auto & kv : getUnitData(_enemy).getUnits())
+	{
+		const UnitInfo & ui(kv.second);
+		// BWAPI::Broodwar->printf("CHECKING IF RUSHING!!!!!!!!!!");
+		// BWAPI::Broodwar->printf("UNIT TYPE IS %s", ui.type.getName().c_str());
+		// check to see if there are multiple types of rushing units
+		if (ui.type == BWAPI::UnitTypes::Zerg_Zergling) {
+			z_rush++;
+			//BWAPI::Broodwar->printf("RUSH UNITS IS ZERGLING");
+		}
+
+		if (ui.type == BWAPI::UnitTypes::Protoss_Zealot) {
+			p_rush++;
+			//BWAPI::Broodwar->printf("RUSH UNITS IS ZEALOT");
+		}
+
+		if (ui.type == BWAPI::UnitTypes::Terran_Marine) {
+			t_rush++;
+			//BWAPI::Broodwar->printf("RUSH UNITS IS MARINE");
+		}
+
+	}
+
+	// rush probably coming. DO SOMETHING
+	if (z_rush >= 6) { 
+		return true;
+	}
+	if (p_rush >= 4) {
+		return true;
+	}
+	if (t_rush >= 5) {
+		return true;
+	}
+	return false;
+
 }

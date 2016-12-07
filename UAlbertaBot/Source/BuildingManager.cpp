@@ -434,6 +434,12 @@ BWAPI::TilePosition BuildingManager::getBuildingLocation(const Building & b)
         distance = Config::Macro::PylonSpacing;
     }
 
+	if (b.type == BWAPI::UnitTypes::Protoss_Photon_Cannon) {
+		
+		
+
+	}
+
     // get a position within our region
     return BuildingPlacer::Instance().getBuildLocationNear(b,distance,false);
 }

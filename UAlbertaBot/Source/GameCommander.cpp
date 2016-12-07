@@ -2,12 +2,13 @@
 #include "GameCommander.h"
 #include "UnitUtil.h"
 
+
 using namespace UAlbertaBot;
 
 GameCommander::GameCommander() 
     : _initialScoutSet(false)
 {
-
+	
 }
 
 void GameCommander::update()

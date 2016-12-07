@@ -35,6 +35,7 @@ void MeleeManager::assignTargetsOld(const BWAPI::Unitset & targets)
 	// for each meleeUnit
 	for (auto & meleeUnit : meleeUnits)
 	{
+		
 		// if the order is to attack or defend
 		if (order.getType() == SquadOrderTypes::Attack || order.getType() == SquadOrderTypes::Defend) 
         {
@@ -98,6 +99,9 @@ std::pair<BWAPI::Unit, BWAPI::Unit> MeleeManager::findClosestUnitPair(const BWAP
 // get a target for the meleeUnit to attack
 BWAPI::Unit MeleeManager::getTarget(BWAPI::Unit meleeUnit, const BWAPI::Unitset & targets)
 {
+	
+
+
 	int highPriority = 0;
 	double closestDist = std::numeric_limits<double>::infinity();
 	BWAPI::Unit closestTarget = nullptr;

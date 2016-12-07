@@ -60,6 +60,21 @@ void AutoObserver::onFrame()
         }
     }
 
+	if (pickUnitToFollow)
+	{
+		for (auto & unit : BWAPI::Broodwar->self()->getUnits())
+		{
+			if (WorkerManager::Instance().isWorkerScout(unit))
+			{
+				_cameraLastMoved = BWAPI::Broodwar->getFrameCount();
+				_unitFollowFrames = 6;
+				_observerFollowingUnit = unit;
+				pickUnitToFollow = false;
+				break;
+			}
+		}
+	}
+
     if (_observerFollowingUnit && _observerFollowingUnit->exists())
     {
         BWAPI::Broodwar->setScreenPosition(_observerFollowingUnit->getPosition() - BWAPI::Position(320, 180));

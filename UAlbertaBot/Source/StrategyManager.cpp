@@ -71,7 +71,7 @@ const bool StrategyManager::shouldExpandNow() const
     }
 
     // we will make expansion N after array[N] minutes have passed
-    std::vector<int> expansionTimes = {5, 10, 20, 30, 40 , 50};
+    std::vector<int> expansionTimes = {12, 20, 30, 40 , 50};
 
     for (size_t i(0); i < expansionTimes.size(); ++i)
     {
@@ -120,11 +120,14 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 	int numProbes           = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Probe);
 	int numNexusCompleted   = BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Nexus);
 	int numNexusAll         = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Nexus);
+	int numForge			= BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Forge);
 	int numCyber            = BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Cybernetics_Core);
+	int numRoboticsSup		= BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Robotics_Support_Bay);
 	int numCannon           = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon);
     int numScout            = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Corsair);
     int numReaver           = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Reaver);
     int numDarkTeplar       = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Dark_Templar);
+	int numShuttle	        = UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Shuttle);
 
     if (Config::Strategy::StrategyName == "Protoss_ZealotRush")
     {
@@ -152,6 +155,95 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
             goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 8));
         }
     }
+	// added strategy here
+	else if (Config::Strategy::StrategyName == "Protoss_ReaverDrop")
+	{
+		// BWAPI::Broodwar->printf("reaver dropping");
+		// start with 1 of each so i can test the reaver drop 
+		if (numReaver < 1)
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 2));
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Reaver, numReaver + 1));
+
+			// shuttle speed upgrade, make sure robotics support bay is still alive
+			if (numRoboticsSup == 0)
+			{
+				goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Robotics_Support_Bay, numRoboticsSup + 1));
+			}
+			goal.push_back(std::pair<MetaType, int>(BWAPI::UpgradeTypes::Gravitic_Drive, 1));
+		}
+
+		// test handling shuttles in productionmanager (faster)
+		/* edge case: while productionmanager automatically queues a shuttle, what if it dies?
+		if ((numShuttle < 1) && (numReaver > 0))
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Shuttle, numShuttle + 1));
+		}
+		*/
+
+		// mass dragoons once we're off the ground
+		else if (BWAPI::Broodwar->self()->gas() > 150)
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 2));
+		}
+		else
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 2));
+		}
+		// doing well, get some upgrades and double the dragoons
+		if (numNexusAll >= 2)
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 4));
+
+			// ground weapons upgrade, make sure forge is still alive
+			if (numForge == 0)
+			{
+				goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Forge, numForge + 1));
+			}
+			goal.push_back(std::pair<MetaType, int>(BWAPI::UpgradeTypes::Protoss_Ground_Weapons, 1));
+		}
+		// make sure shuttles are out first. How about no??? Whats the point of having a shuttle with no
+		// attacking units?.
+		
+		// warped in from gateways so shouldn't interfere with dropship production
+		// It does interfere? Depends on our resources as well doesn't it?	
+		//goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 4));
+		//goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, numDragoons + 1));
+
+		/* get that upgrade for dragoons */
+		if (numDragoons > 2)
+		{
+			// dragoon range upgrade, make sure cybernetics core is still alive
+			if (numCyber == 0)
+			{
+				goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Cybernetics_Core, numCyber + 1));
+			}
+			goal.push_back(std::pair<MetaType, int>(BWAPI::UpgradeTypes::Singularity_Charge, 1));
+		}
+
+		if (BWAPI::Broodwar->getFrameCount() > 20000)
+		{
+			// scarab damage upgrade, make sure robotics support bay is still alive
+			if (numRoboticsSup == 0)
+			{
+				goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Robotics_Support_Bay, numRoboticsSup + 1));
+			}
+			goal.push_back(std::pair<MetaType, int>(BWAPI::UpgradeTypes::Scarab_Damage, 1));
+
+			// plasma shield upgrade, make sure forge is still alive
+			if (numForge == 0)
+			{
+				goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Forge, numForge + 1));
+			}
+			goal.push_back(std::pair<MetaType, int>(BWAPI::UpgradeTypes::Protoss_Plasma_Shields, 1));
+		}
+		
+		// make sure drop squad has enough zealots
+		if (numReaver > 0 && numShuttle > 0 && numZealots <= 1)
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Zealot, numZealots + 2));
+		}
+	}
     else if (Config::Strategy::StrategyName == "Protoss_DTRush")
     {
         goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dark_Templar, numDarkTeplar + 2));
@@ -188,6 +280,12 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 		}
 	}
 
+	// if our nexus has been destroyed by a rush 
+	if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Nexus) == 0)
+	{
+		goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Nexus, 1));
+	}
+
     // if we want to expand, insert a nexus into the build order
 	if (shouldExpandNow())
 	{
@@ -196,6 +294,22 @@ const MetaPairVector StrategyManager::getProtossBuildOrderGoal() const
 
 	return goal;
 }
+
+/*
+const int StrategyManager::getRemainingReaverBuildTime() const
+{
+	for (const auto & unit : BWAPI::Broodwar->self()->getUnits())
+	{
+		// search for reavers being built and return the time remaining
+		if (unit->getType() == BWAPI::UnitTypes::Protoss_Reaver)
+		{
+			return unit->getRemainingBuildTime();
+		}
+	}
+	// no reavers are being built
+	return -1;
+}
+*/
 
 const MetaPairVector StrategyManager::getTerranBuildOrderGoal() const
 {

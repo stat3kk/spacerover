@@ -28,7 +28,8 @@ class Squad
 	MeleeManager        _meleeManager;
 	RangedManager       _rangedManager;
 	DetectorManager     _detectorManager;
-	TransportManager    _transportManager;
+	// make access function for this later and remove from public
+	//TransportManager    _transportManager;
     TankManager         _tankManager;
     MedicManager        _medicManager;
 
@@ -69,5 +70,8 @@ public:
 
 	const BWAPI::Unitset &  getUnits() const;
 	const SquadOrder &  getSquadOrder()	const;
+
+	TransportManager    _transportManager;
+
 };
 }

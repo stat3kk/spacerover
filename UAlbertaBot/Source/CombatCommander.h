@@ -13,11 +13,15 @@ class CombatCommander
 	SquadData       _squadData;
     BWAPI::Unitset  _combatUnits;
     bool            _initialized;
+	bool			_firstDropReady;
 
     void            updateScoutDefenseSquad();
 	void            updateDefenseSquads();
 	void            updateAttackSquads();
     void            updateDropSquads();
+	// new
+	void			updateReaverDropSquads();
+
 	void            updateIdleSquad();
 	bool            isSquadUpdateFrame();
 	int             getNumType(BWAPI::Unitset & units, BWAPI::UnitType type);
