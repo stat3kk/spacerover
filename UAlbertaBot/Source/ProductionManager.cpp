@@ -136,8 +136,8 @@ void ProductionManager::update()
 	}
 
 	// if enemy is rushing setup our defenses. THIS SETS UP 3 CANNONS ONCE
-	// conditions: if enemy is rushing and it is before ~10minutes
-	if (!_enemyRushDetected && InformationManager::Instance().enemyIsRushing() && BWAPI::Broodwar->getFrameCount() < 14000)
+	// conditions: if enemy is rushing and it is before ~8minutes
+	if (!_enemyRushDetected && InformationManager::Instance().enemyIsRushing() && BWAPI::Broodwar->getFrameCount() < 11200)
 	{
 		// BWAPI::Broodwar->printf("framecount = %d", BWAPI::Broodwar->getFrameCount());
 		// BWAPI::Broodwar->printf("waiting for forge....");
@@ -152,11 +152,11 @@ void ProductionManager::update()
 		*/
 		if (BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Forge) > 0) {
 			// we don't want to have more than 3 cannons at a time
-			BWAPI::Broodwar->printf("Our current cannons: %d", BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon));
+			//BWAPI::Broodwar->printf("Our current cannons: %d", BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon));
 			// maintain 3 cannons at all time in case? 
 			if (!_enemyRushDetected && BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon) < 3)
 			{
-				BWAPI::Broodwar->printf("pushing 3 cannons");
+				BWAPI::Broodwar->printf("Pushing 3 cannons as rush is detected");
 				_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Photon_Cannon), true);
 				_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Photon_Cannon), true);
 				_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Photon_Cannon), true);
@@ -170,7 +170,7 @@ void ProductionManager::update()
 	//BWAPI::Broodwar->printf("Our current probes: %d", BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Probe));
 	// if we have only 1 nexus
 	if (!_isExpand && BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Probe) >= 20 && BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Nexus) == 1) {
-		BWAPI::Broodwar->printf("Our current probes: %d", BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Probe));
+		//BWAPI::Broodwar->printf("Our current probes: %d", BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Probe));
 		if (!_queue.isEmpty()) {
 			BuildOrderItem & currentItem = _queue.getHighestPriorityItem();
 			if (currentItem.metaType.getUnitType() == BWAPI::UnitTypes::Protoss_Probe) {
@@ -186,7 +186,7 @@ void ProductionManager::update()
 
 	// if we have 2 nexus
 	else if (BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Probe) >= 30 && BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Nexus) > 1) {
-		BWAPI::Broodwar->printf("Our current probes: %d", BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Probe));
+		//BWAPI::Broodwar->printf("Our current probes: %d", BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Probe));
 		if (!_queue.isEmpty()) {
 			BuildOrderItem & currentItem = _queue.getHighestPriorityItem();
 			if (currentItem.metaType.getUnitType() == BWAPI::UnitTypes::Protoss_Probe) {
@@ -200,7 +200,7 @@ void ProductionManager::update()
 		if (!_queue.isEmpty()) {
 			BuildOrderItem & currentItem = _queue.getHighestPriorityItem();
 			if (currentItem.metaType.getUnitType() == BWAPI::UnitTypes::Protoss_Gateway) {
-				BWAPI::Broodwar->printf("Our current gateway: %d", BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Gateway));
+				//BWAPI::Broodwar->printf("Our current gateway: %d", BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Gateway));
 				_queue.removeCurrentHighestPriorityItem();
 			}
 		}

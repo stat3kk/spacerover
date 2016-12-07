@@ -592,8 +592,7 @@ bool InformationManager::enemyIsRushing()
 	for (const auto & kv : getUnitData(_enemy).getUnits())
 	{
 		const UnitInfo & ui(kv.second);
-		// BWAPI::Broodwar->printf("CHECKING IF RUSHING!!!!!!!!!!");
-		// BWAPI::Broodwar->printf("UNIT TYPE IS %s", ui.type.getName().c_str());
+
 		// check to see if there are multiple types of rushing units
 		if (ui.type == BWAPI::UnitTypes::Zerg_Zergling) {
 			z_rush++;
