@@ -220,9 +220,6 @@ void CombatCommander::updateReaverDropSquads()
 	int zealotSpotsRemaining = 2;
 	auto & dropUnits = dropSquad.getUnits(); 
 
-	//BWAPI::Broodwar->printf("What squad? %d", whichSquad);
-	
-
 	// is the existing squad ready to go?
 	for (auto & unit : dropUnits)
 	{
@@ -236,8 +233,7 @@ void CombatCommander::updateReaverDropSquads()
 		else if (unit->getType() == BWAPI::UnitTypes::Protoss_Reaver)
 		{
 			
-			// we have to train the scarabs here? ... apparently ... after the last push on git
-			// the scarabs wouldn't train anymore using the ualberta bot function wtf
+			// train scarabs here because training them in rangedManager sometimes does not work
 			if (!dropSquad._transportManager._leftBase) 
 			{
 				for (int i = 0; i < 5; ++i)
@@ -245,14 +241,8 @@ void CombatCommander::updateReaverDropSquads()
 					unit->train(BWAPI::UnitTypes::Protoss_Scarab);
 				}
 
-				// _BRANDON_
 				// to move zealots to reaver for now
 				for (auto & unitZealot : dropUnits) {
-					/* _BRANDON_ you know how you said you were going to have the zealots do something? 
-					// this code below moves the zealots to the reaver if the reaver exists
-					// might want to add another conditional if we wanted the zealots to defend? or would it matter?
-					// since i assume you will just put the zealot into the defense squad instead?
-					*/
 
 					if (unitZealot->getType() == BWAPI::UnitTypes::Protoss_Zealot) {
 						unitZealot->move(unit->getPosition());
@@ -294,18 +284,27 @@ void CombatCommander::updateReaverDropSquads()
 		// look for reavers
 		for (auto & unit : dropUnits)
 		{
+
 			// found the reaver
 			if ((unit->getType() == BWAPI::UnitTypes::Protoss_Reaver))
 			{	// so we pick up the reaver and fly back to base
+
+				// move zealots to shuttle if no enemies
+				for (auto & unitZealot : dropUnits) {
+					if (unitZealot->getType() == BWAPI::UnitTypes::Protoss_Zealot) {
+						// checks if there are enemies in range of the zealot
+						// if not, we move the zealot to the shuttle
+						if (unitZealot->getUnitsInRadius(96, BWAPI::Filter::IsEnemy).size() <= 0) {
+							unitZealot->move(unit->getPosition());
+						}
+					}
+				}
 
 				// reload scarabs 
 				for (int i = unit->getScarabCount(); i < 5; ++i)
 				{
 					unit->train(BWAPI::UnitTypes::Protoss_Scarab);
 				}
-
-				//BWAPI::Broodwar->printf("Is the reaver safe? %d", dropSquad._transportManager.isSafe(unit));
-				// we might want to deal with the case when the reaver runs out of scarabs
 
 
 				/*
@@ -363,21 +362,14 @@ void CombatCommander::updateReaverDropSquads()
 				zealotSpotsRemaining -= 1;
 			}
 		}
-		// debug
-		//if (!dropSquadHasTransport) { BWAPI::Broodwar->printf("Waiting for shuttle, current: %d\n", UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Shuttle)); }
-		//if (!dropSquadHasReaver) { BWAPI::Broodwar->printf("Waiting for reaver, current: %d\n", UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Reaver)); }
-		//if (zealotSpotsRemaining > 0) { BWAPI::Broodwar->printf("Waiting for zealots, current: %d\n", UnitUtil::GetAllUnitCount(BWAPI::UnitTypes::Protoss_Zealot)); }
+		
 	}
 	// squad is ready to roll and HASN'T LEFT BASE
 	else
 	{
 		_firstDropReady = true;
-		// load em up
 
-		// we can access the _transportShip from dropSquad
-		/*if we have not left the base yet*/ 
-
-		// because order of loading units matter
+		// order of loading units matter
 		// load zealots
 		for (auto & unit : dropUnits)
 		{
@@ -398,7 +390,6 @@ void CombatCommander::updateReaverDropSquads()
 			}
 		}
 
-		// hmmm TransportManager handles this for the shuttle, not sure about the other units
 		SquadOrder dropOrder(SquadOrderTypes::ReaverDrop, getMainAttackLocation(), 800, "Attack Enemy Base");
 		dropSquad.setSquadOrder(dropOrder);
 	}

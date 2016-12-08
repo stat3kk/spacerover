@@ -28,12 +28,10 @@ void TransportManager::clearAll() {
 
 void TransportManager::executeMicro(const BWAPI::Unitset & targets) 
 {
-	// I assume this is the units in the drop squad. Nope this just finds the shuttle
 	const BWAPI::Unitset & transportUnits = getUnits();
 
 	if (transportUnits.empty())
 	{
-		
 		return;
 	}	
 }
@@ -160,7 +158,7 @@ void TransportManager::update()
 
 	moveTroops();
 
-	/* if we want to return but we haven't loaded the reaver */
+	// if we want to return but we haven't loaded the reaver 
 	if (_transportShip && _returning && _transportShip->getSpaceRemaining() > 5)
 	{
 		return;
@@ -189,14 +187,7 @@ void TransportManager::moveTransport()
 		&& _transportShip->canUnloadAtPosition(_transportShip->getPosition()) 
 		)
 	{
-		
-		BWAPI::Broodwar->printf("Can unload here? %d", _transportShip->canUnloadAtPosition(_transportShip->getPosition()));
-		BWAPI::Broodwar->printf("%d--%d--%d", (currentCommand.getType() == BWAPI::UnitCommandTypes::Unload_All)
-			, (currentCommand.getType() == BWAPI::UnitCommandTypes::Unload_All_Position)
-			, (_transportShip->getLoadedUnits().size() > 0) 
-			);
-		 
-
+				 
 		// if we are safe and enemies are in range of our attacks so we wait until we finish unloading (isSafe == 1)
 		// for zealots, the (isSafe == 0) condition might occur as we base isSafe off the transportShip
 		if (isSafe(_transportShip) < 2) {
@@ -208,7 +199,7 @@ void TransportManager::moveTransport()
 	// we have left the base
 	_leftBase = true;
 
-		/*we want to retreat*/ 
+	// we want to retreat 
 	if (_returning)
 	{
 		// ditch the zealots
@@ -240,7 +231,6 @@ void TransportManager::moveTransport()
 		}
 		else
 		{
-			// might want to move this back to combat commander?
 			// moves the shuttle to the reaver if we are currently using the reaver to attack
 			for (auto & reaver : _transportShip->getUnitsInRadius(BWAPI::WeaponTypes::Scarab.maxRange() * 4, BWAPI::Filter::IsAlly))
 			{
@@ -263,28 +253,26 @@ void TransportManager::moveTroops()
 		return;
 	}
 
-	//unload zealots and reavers if close enough or dying
+	// unload zealots and reavers if close enough or dying
 	int transportHP = _transportShip->getHitPoints() + _transportShip->getShields();
 	
-	// this should not be needed PLS REMOVE
+	// this should not be needed? if its not broken don't fix it
 	BWTA::BaseLocation * enemyBaseLocation = InformationManager::Instance().getMainBaseLocation(BWAPI::Broodwar->enemy());
 
 	int weaponRange = BWAPI::WeaponTypes::Scarab.maxRange();
 	int radiusOfShuttle = weaponRange; // this can be changed to determine the radius at which we find our enemy units
 
-	// why use radiusOfShuttle here??? we don't need to. We can totally search the all the enemy units if we want?
+	// get targets in range of shuttle
 	BWAPI::Unitset unitsInRange = _transportShip->getUnitsInRadius(radiusOfShuttle * 3, BWAPI::Filter::IsEnemy);
 	BWAPI::Unit target = assignTargetsOld(unitsInRange);
 	
 	/*
 	  checks if target is within weapon range of reaver (might want to add a buffer)
-	  or if we are low on hp.
 	  original UAlbertaBot code conflicts due to its EnemyBaseLocation < 300 and our isSafe == 2 (combat commander)
 	*/
 	if 
 		(
-		  ( (target != NULL) && (_transportShip->getDistance(target) < weaponRange) ) //||
-		  //( (transportHP < 100) && _transportShip->canUnloadAtPosition(_transportShip->getPosition()) )
+		  ( (target != NULL) && (_transportShip->getDistance(target) < weaponRange) ) 
 		)
 	{
 
@@ -301,22 +289,16 @@ void TransportManager::moveTroops()
 		if (!_returning && _transportShip->getSpaceRemaining() < 5) 
 		{
 			_transportShip->unloadAll();
-			// dude your operator overload is the same as using no parameters.
-			// i spent like a whole hour figuring this was causing a bug...
-			//_transportShip->unloadAll(_transportShip->getPosition());
 		}
 	
 	}
 	
 }
 
-// ... how does this even work? what if i want it to go back to my base????
+
 void TransportManager::followPerimeter(int clockwise)
 {
 	BWAPI::Position goTo = getFleePosition(clockwise);
-	
-	// theres probably extra conditional checks done here that we don't need
-	// we want to return and we have not up the shuttle
 
 	if (Config::Debug::DrawUnitTargetInfo)
 	{
@@ -545,10 +527,6 @@ void TransportManager::setTo(BWAPI::Position to)
 
 BWAPI::Unit TransportManager::assignTargetsOld(const BWAPI::Unitset & targets)
 {
-	// do i need this tbh?
-	// i can just use _transportShip can't I?
-	// i think so
-	//const BWAPI::Unitset & rangedUnits = getUnits();
 
 	// figure out targets
 	BWAPI::Unitset reaverUnitTargets;
@@ -606,8 +584,7 @@ BWAPI::Unit TransportManager::getTarget(BWAPI::Unit shuttleUnit, const BWAPI::Un
 	return closestTarget;
 } 
 
-// get the attack priority of a type in relation to a zergling??
-// do we really want to target enemy workers instead? I don't think so
+// might be a bit excessive if we are just checking if we want to drop
 int TransportManager::getAttackPriority(BWAPI::Unit reaverUnit, BWAPI::Unit target)
 {
 	BWAPI::UnitType rangedType = reaverUnit->getType();

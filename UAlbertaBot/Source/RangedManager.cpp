@@ -122,10 +122,11 @@ BWAPI::Unit RangedManager::getTarget(BWAPI::Unit rangedUnit, const BWAPI::Unitse
 		}       
     }
 
+	// maximize scarab damage
 	if (rangedUnit->getType() == BWAPI::UnitTypes::Protoss_Scarab) {
 		
 		BWAPI::Unitset splashTargets = closestTarget->getUnitsInRadius(60, BWAPI::Filter::IsEnemy);
-
+		
 		int maxDamage = 0;
 		// enemies within range of the radius of scarab explosion
 		for (auto & scarabTarget : splashTargets)
