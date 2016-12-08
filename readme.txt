@@ -18,7 +18,7 @@ Jacky Chung:
 Jimmy Ho:  
   
   InformationManager.cpp
-    added checks for rushes based off the enemy number of units
+    added check for rushes based off the enemy number of units with function "enemyIsRushing()"
     enemyIsRushing() -> the function that checks if enemy is rushing
   
   ProductionManager.cpp
