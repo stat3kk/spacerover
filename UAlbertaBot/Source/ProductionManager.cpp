@@ -156,7 +156,7 @@ void ProductionManager::update()
 			// maintain 3 cannons at all time in case? 
 			if (!_enemyRushDetected && BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon) < 3)
 			{
-				BWAPI::Broodwar->printf("Pushing 3 cannons as rush is detected");
+				//BWAPI::Broodwar->printf("Pushing 3 cannons as rush is detected");
 				_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Photon_Cannon), true);
 				_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Photon_Cannon), true);
 				_queue.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Photon_Cannon), true);
@@ -444,7 +444,7 @@ void ProductionManager::create(BWAPI::Unit producer, BuildOrderItem & item)
 
     MetaType t = item.metaType;
 	if (t.getUnitType().isBuilding() && t.getUnitType() == BWAPI::UnitTypes::Protoss_Photon_Cannon) {
-		BWAPI::Broodwar->printf("photon cannon is the unit type! lets place it at [%d, %d]", BWAPI::Broodwar->self()->getStartLocation().x, BWAPI::Broodwar->self()->getStartLocation().y);
+		//BWAPI::Broodwar->printf("photon cannon is the unit type! lets place it at [%d, %d]", BWAPI::Broodwar->self()->getStartLocation().x, BWAPI::Broodwar->self()->getStartLocation().y);
 
 		// BuildingManager::Instance().addBuildingTask(t.getUnitType(), BWAPI::Broodwar->self()->getStartLocation(), item.isGasSteal);
 	}
